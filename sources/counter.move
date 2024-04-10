@@ -9,10 +9,6 @@ module aptos_counter::counter {
     #[test_only]
     use std::vector;
     #[test_only]
-    use aptos_std::debug;
-    #[test_only]
-    use aptos_std::math_fixed::exp;
-    #[test_only]
     use aptos_framework::account;
     #[test_only]
     use aptos_framework::event::emitted_events;
