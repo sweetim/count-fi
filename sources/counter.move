@@ -4,9 +4,14 @@ module aptos_counter::counter {
     use aptos_std::smart_vector;
     use aptos_std::smart_vector::SmartVector;
     use aptos_framework::event;
+    use aptos_framework::randomness;
 
     #[test_only]
     use std::vector;
+    #[test_only]
+    use aptos_std::debug;
+    #[test_only]
+    use aptos_std::math_fixed::exp;
     #[test_only]
     use aptos_framework::account;
     #[test_only]
@@ -166,6 +171,71 @@ module aptos_counter::counter {
         decrement(user_1);
 
         assert!(get_value() == 0, 1);
+    }
+
+    #[randomness]
+    entry fun random(user: &signer) acquires Counter {
+        let counter_record = CounterRecord {
+            action: COUNTER_ACTION_RANDOM,
+            timestamp_us: timestamp::now_microseconds(),
+            user: signer::address_of(user)
+        };
+
+        let counter = borrow_global_mut<Counter>(@aptos_counter);
+        let random_value = randomness::u128_range(0, 2);
+        counter.value = if (random_value == 0) {
+            counter.value + 1
+        } else {
+            if (counter.value > 0) {
+                counter.value - 1
+            } else {
+                0
+            }
+        };
+
+        smart_vector::push_back(&mut counter.records, counter_record);
+
+        event::emit(counter_record);
+    }
+
+    #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
+    public fun test_random(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter {
+        timestamp::set_time_has_started_for_testing(framework);
+        randomness::initialize_for_testing(framework);
+        randomness::set_seed(x"0000000000000000000000000000000000000000000000000000000000000001");
+
+        let owner = &account::create_account_for_test(@aptos_counter);
+        account::create_account_for_test(signer::address_of(user_1));
+        account::create_account_for_test(signer::address_of(user_2));
+
+        let actual = vector[];
+
+        init_module(owner);
+        vector::push_back(&mut actual, get_value());
+
+        random(user_1);
+        vector::push_back(&mut actual, get_value());
+
+        random(user_2);
+        vector::push_back(&mut actual, get_value());
+
+        random(user_2);
+        vector::push_back(&mut actual, get_value());
+
+        random(user_2);
+        vector::push_back(&mut actual, get_value());
+
+        random(user_1);
+        vector::push_back(&mut actual, get_value());
+
+        let expected: vector<u128> = vector[
+            0, 1, 0, 0, 1, 2
+        ];
+
+        vector::zip(actual, expected, |a, e| assert!(a == e, 1));
+
+        let event_length = vector::length(&emitted_events<CounterRecord>());
+        assert!(event_length == 5, 3);
     }
 
     #[view]
