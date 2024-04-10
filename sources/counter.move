@@ -86,7 +86,7 @@ module aptos_counter::counter {
 
     public entry fun decrement(user: &signer) acquires Counter {
         let counter_record = CounterRecord {
-            action: COUNTER_ACTION_INCREMENT,
+            action: COUNTER_ACTION_DECREMENT,
             timestamp_us: timestamp::now_microseconds(),
             user: signer::address_of(user)
         };
