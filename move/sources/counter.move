@@ -1,13 +1,13 @@
 module aptos_counter::counter {
     use std::timestamp;
     use std::signer;
+    use std::vector;
+
     use aptos_std::smart_vector;
     use aptos_std::smart_vector::SmartVector;
     use aptos_framework::event;
     use aptos_framework::randomness;
 
-    #[test_only]
-    use std::vector;
     #[test_only]
     use aptos_framework::account;
     #[test_only]
@@ -48,14 +48,18 @@ module aptos_counter::counter {
     }
 
     public entry fun increment(user: &signer) acquires Counter {
+        perform_action(user, COUNTER_ACTION_INCREMENT);
+    }
+
+    fun perform_action(user: &signer, action: u8) acquires Counter {
         let counter_record = CounterRecord {
-            action: COUNTER_ACTION_INCREMENT,
+            action,
             timestamp_us: timestamp::now_microseconds(),
             user: signer::address_of(user)
         };
 
         let counter = borrow_global_mut<Counter>(@aptos_counter);
-        counter.value = counter.value + 1;
+        update_value_from_action(&mut counter.value, action);
         smart_vector::push_back(&mut counter.records, counter_record);
 
         event::emit(counter_record);
@@ -86,20 +90,7 @@ module aptos_counter::counter {
     }
 
     public entry fun decrement(user: &signer) acquires Counter {
-        let counter_record = CounterRecord {
-            action: COUNTER_ACTION_DECREMENT,
-            timestamp_us: timestamp::now_microseconds(),
-            user: signer::address_of(user)
-        };
-
-        let counter = borrow_global_mut<Counter>(@aptos_counter);
-        if (counter.value > 0) {
-            counter.value = counter.value - 1;
-        };
-
-        smart_vector::push_back(&mut counter.records, counter_record);
-
-        event::emit(counter_record);
+        perform_action(user, COUNTER_ACTION_DECREMENT);
     }
 
     fun change_value(signer: &signer, value: u128) acquires Counter {
@@ -171,27 +162,34 @@ module aptos_counter::counter {
 
     #[randomness]
     entry fun random(user: &signer) acquires Counter {
-        let counter_record = CounterRecord {
-            action: COUNTER_ACTION_RANDOM,
-            timestamp_us: timestamp::now_microseconds(),
-            user: signer::address_of(user)
+        let random_action = randomness::u8_range(
+            COUNTER_ACTION_INCREMENT,
+            COUNTER_ACTION_DECREMENT + 1);
+
+        perform_action(user, random_action);
+    }
+
+    fun update_value_from_action(value: &mut u128, action: u8) {
+        if (action == COUNTER_ACTION_INCREMENT) {
+            *value = *value + 1;
         };
 
-        let counter = borrow_global_mut<Counter>(@aptos_counter);
-        let random_value = randomness::u128_range(0, 2);
-        counter.value = if (random_value == 0) {
-            counter.value + 1
-        } else {
-            if (counter.value > 0) {
-                counter.value - 1
-            } else {
-                0
+        if (action == COUNTER_ACTION_DECREMENT) {
+            if (*value > 0) {
+                *value = *value - 1;
             }
         };
+    }
 
-        smart_vector::push_back(&mut counter.records, counter_record);
+    #[test]
+    public fun test_update_value_from_action() {
+        let value: u128 = 100;
 
-        event::emit(counter_record);
+        update_value_from_action(&mut value, COUNTER_ACTION_INCREMENT);
+        assert!(value == 101, 1);
+
+        update_value_from_action(&mut value, COUNTER_ACTION_DECREMENT);
+        assert!(value == 100, 1);
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
@@ -264,6 +262,47 @@ module aptos_counter::counter {
 
     #[view]
     public fun query_all_records(): vector<CounterRecord> acquires Counter {
-        smart_vector::to_vector(&borrow_global<Counter>(@aptos_counter).records)
+        let all_records = smart_vector::to_vector(&borrow_global<Counter>(@aptos_counter).records);
+        vector::reverse(&mut all_records);
+        all_records
+    }
+
+    #[test(framework = @0x1, user_1 = @0x123)]
+    public fun test_query_all_records_in_descending_order(framework: &signer, user_1: &signer) acquires Counter {
+        timestamp::set_time_has_started_for_testing(framework);
+
+        let owner = &account::create_account_for_test(@aptos_counter);
+
+        account::create_account_for_test(signer::address_of(user_1));
+
+        init_module(owner);
+
+        timestamp::fast_forward_seconds(1);
+        increment(user_1);
+        timestamp::fast_forward_seconds(1);
+        decrement(user_1);
+        timestamp::fast_forward_seconds(1);
+        increment(user_1);
+
+        let expected: vector<CounterRecord> = vector[
+            CounterRecord {
+                user: @0x123,
+                timestamp_us: 3000000,
+                action: 1
+            },
+            CounterRecord {
+                user: @0x123,
+                timestamp_us: 2000000,
+                action: 2
+            },
+            CounterRecord {
+                user: @0x123,
+                timestamp_us: 1000000,
+                action: 1
+            }
+        ];
+        let actual = query_all_records();
+
+        assert!(expected == actual, 1);
     }
 }
