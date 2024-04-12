@@ -41,7 +41,6 @@ module aptos_counter::counter {
     #[test]
     public fun test_init() acquires Counter {
         let owner = account::create_account_for_test(@aptos_counter);
-
         init_module(&owner);
 
         assert!(get_value() == 0, 1);
@@ -61,6 +60,10 @@ module aptos_counter::counter {
         let counter = borrow_global_mut<Counter>(@aptos_counter);
         update_value_from_action(&mut counter.value, action);
         smart_vector::push_back(&mut counter.records, counter_record);
+
+        if (aptos_counter::ft::is_exists()) {
+            aptos_counter::ft::mint_to(signer::address_of(user), 1);
+        };
 
         event::emit(counter_record);
     }
