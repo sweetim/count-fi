@@ -59,7 +59,7 @@ function App() {
       }
     }
 
-    if (!account) return;
+    // if (!account) return;
 
     getValue()
     getAllRecords()
