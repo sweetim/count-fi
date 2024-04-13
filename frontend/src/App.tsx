@@ -63,7 +63,7 @@ function App() {
 
     getValue()
     getAllRecords()
-  }, [account?.address])
+  }, [])
 
 
   const getActionIcon = (action: number) => {
