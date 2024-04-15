@@ -1,0 +1,66 @@
+import { Button, Flex, Typography } from "antd"
+import { FC, useEffect, useState } from "react"
+import { PlusIcon, MinusIcon } from "@heroicons/react/20/solid"
+
+import { decrementTransactionData, getValue, incrementTransactionData } from "../contract"
+import { useWallet } from "@aptos-labs/wallet-adapter-react"
+import { getAptosClient } from "../../common/aptosClient"
+
+const { Title } = Typography
+
+const aptos = getAptosClient()
+
+const ActionCounter: FC = () => {
+  const { signAndSubmitTransaction, account } = useWallet()
+  const [value, setValue] = useState("...")
+
+  useEffect(() => {
+    getValue().then(v => setValue(v.toString()))
+  }, [])
+
+  async function incrementClickHandler() {
+    if (!account) throw new Error("account not available")
+
+    try {
+      const response: any = await signAndSubmitTransaction(incrementTransactionData())
+      await aptos.waitForTransaction({ transactionHash: response.hash })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async function decrementClickHandler() {
+    if (!account) throw new Error("account not available")
+
+    try {
+      const response: any = await signAndSubmitTransaction(decrementTransactionData())
+      await aptos.waitForTransaction({ transactionHash: response.hash })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  return (
+    <Flex gap="middle" vertical>
+      <Button type="text"
+        icon={<PlusIcon
+          width={32}
+          height={32}
+          color="#FFF" />}
+        size={"large"}
+        shape="circle"
+        onClick={incrementClickHandler} />
+      <Title>{value}</Title>
+      <Button type="text"
+        icon={<MinusIcon
+          width={32}
+          height={32}
+          color="#FFF" />}
+        size={"large"}
+        shape="circle"
+        onClick={decrementClickHandler} />
+    </Flex>
+  )
+}
+
+export default ActionCounter
