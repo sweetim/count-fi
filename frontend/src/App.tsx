@@ -2,8 +2,8 @@ import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
 import { Col, Flex, Layout, Row } from 'antd'
 import { Content, Header } from 'antd/es/layout/layout'
 import { FC, useEffect, useState } from 'react'
-import { CounterRecord, getAllRecords } from './module/contract';
-import { ActionCounter, RecordTimeline } from './module/components';
+import { CounterRecord, getAllRecords } from './module/counter/contract';
+import { ActionCounter, RecordTimeline } from './module/counter/components';
 import CounterLogo from './icons/CounterLogo';
 
 const App: FC = () => {

@@ -4,7 +4,7 @@ import { PlusIcon, MinusIcon } from "@heroicons/react/20/solid"
 
 import { decrementTransactionData, getValue, incrementTransactionData } from "../contract"
 import { useWallet } from "@aptos-labs/wallet-adapter-react"
-import { getAptosClient } from "../../common/aptosClient"
+import { getAptosClient } from "@/common/aptosClient"
 
 const { Title } = Typography
 

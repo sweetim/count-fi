@@ -4,6 +4,7 @@ import { MinusCircleOutlined, PlusCircleOutlined, QuestionCircleOutlined } from 
 import { formatDistanceToNow } from "date-fns"
 
 import { CounterAction, CounterRecord } from "../contract"
+import { getAptosExplorerUrl } from "@/common/aptosClient"
 
 export type RecordTimelineProps = {
   records: CounterRecord[]
@@ -13,10 +14,10 @@ const { Text, Link } = Typography
 const { useBreakpoint } = Grid;
 
 const getActionIcon = (action: CounterAction) => {
-  const ACTION_ICONS: Record<number, JSX.Element> = {
+  const ACTION_ICONS: Record<CounterAction, JSX.Element> = {
     1: <PlusCircleOutlined style={{ color: "#bef264" }} />,
-    2: <MinusCircleOutlined style={{ color: "#bef264" }} />,
-    3: <QuestionCircleOutlined spin style={{ color: "#f43f5e" }} />,
+    2: <MinusCircleOutlined style={{ color: "#f43f5e" }} />,
+    3: <QuestionCircleOutlined spin style={{ color: "cyan" }} />,
   }
 
   return ACTION_ICONS[action]
@@ -24,7 +25,7 @@ const getActionIcon = (action: CounterAction) => {
 
 const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
   const recordTemplate = (record: CounterRecord) => {
-    const addressUrl = `https://explorer.aptoslabs.com/account/${record.user}?network=devnet`
+    const addressUrl = getAptosExplorerUrl(record.user)
     const timestamp_ms = Number(record.timestamp_us) / 1000
     const relativeTime = `${formatDistanceToNow(timestamp_ms)} ago`
     const timestampText = (new Date(timestamp_ms)).toLocaleString()

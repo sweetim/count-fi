@@ -1,5 +1,5 @@
 import { InputTransactionData } from '@aptos-labs/wallet-adapter-react';
-import { getAptosClient } from '../common/aptosClient';
+import { getAptosClient } from '@/common/aptosClient';
 
 export enum CounterAction {
   Increment = 1,
