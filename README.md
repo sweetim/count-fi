@@ -1,21 +1,16 @@
-## Debug
+## Aptos Counter Dapp
 
-```
-let value_a: u64 = 123;
-let value_b: u64 = 321;
-debug::print(&string_utils::format2(&b"value_a = ({}), value_b = ({})", value_a, value_b));
-```
+A simple counter app used to demostrate all the features available in APTOS
 
-```
-└─▪ aptos move publish --assume-yes
-Compiling, may take a little while to download git dependencies...
-UPDATING GIT DEPENDENCY https://github.com/aptos-labs/aptos-core.git
-INCLUDING DEPENDENCY AptosFramework
-INCLUDING DEPENDENCY AptosStdlib
-INCLUDING DEPENDENCY MoveStdlib
-BUILDING aptos-counter
-package size 6328 bytes
-{
-  "Error": "Simulation failed with status: Move abort in 0x1::fungible_asset: 0x20013"
-}
-```
+### Features
+
+It can perform actions to change the value of the counter
+- increment
+- decrement
+- random (it could be increment or decrement)
+
+each time a user perform an action, the user can obtain a `CNTR` asset that you can use to change some settings of the smart contract
+
+### NFT
+
+the user will mint a NFT (digital token) whenever the counter reaches a certain value
