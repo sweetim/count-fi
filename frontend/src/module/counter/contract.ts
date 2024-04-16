@@ -56,3 +56,12 @@ export function decrementTransactionData(): InputTransactionData {
     }
   }
 }
+
+export function randomTransactionData(): InputTransactionData {
+  return {
+    data: {
+      function: `${MODULE_ADDRESS}::counter::random`,
+      functionArguments: []
+    }
+  }
+}
