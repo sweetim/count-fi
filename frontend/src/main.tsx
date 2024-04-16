@@ -20,7 +20,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ConfigProvider theme={{
         algorithm: theme.darkAlgorithm,
         token: {
-          fontFamily: "mali"
+          fontFamily: "mali",
+        },
+        components: {
+          Layout: {
+            headerBg: "#192435",
+            bodyBg: "#1e293b"
+          },
+          Timeline: {
+            dotBg: "#1e293b"
+          }
         }
       }}>
         <App />

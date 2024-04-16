@@ -1,13 +1,13 @@
 import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
-import { Flex, Layout } from 'antd'
+import { Col, Flex, Layout, Row } from 'antd'
 import { Content, Header } from 'antd/es/layout/layout'
 import { FC, useEffect, useState } from 'react'
 import { CounterRecord, getAllRecords } from './module/contract';
-import { ActionCounter, Timeline } from './module/components';
-
+import { ActionCounter, RecordTimeline } from './module/components';
+import CounterLogo from './icons/CounterLogo';
 
 const App: FC = () => {
-  const [ allRecords, setAllRecords ] = useState<CounterRecord[]>([])
+  const [allRecords, setAllRecords] = useState<CounterRecord[]>([])
 
   useEffect(() => {
     getAllRecords().then(result => setAllRecords(result))
@@ -15,14 +15,30 @@ const App: FC = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-        <Header>
+      <Header style={{ padding: "15px" }}>
+        <Flex style={{ height: "100%"}}
+          justify="space-between"
+          align="center">
+          <CounterLogo style={{ width: "32px", fill: "white "}}/>
           <WalletSelector />
-        </Header>
-        <Content>
-          <ActionCounter />
-          <Timeline records={allRecords} />
-        </Content>
-      </Layout>
+        </Flex>
+
+      </Header>
+      <Content>
+        <Row style={{ minHeight: "100%" }}>
+          <Col
+            xs={24}
+            md={12}>
+            <ActionCounter />
+          </Col>
+          <Col xs={24}
+            md={12}
+            style={{ overflow: "auto", padding: "20px", height: "100%" }}>
+            <RecordTimeline records={allRecords} />
+          </Col>
+        </Row>
+      </Content>
+    </Layout>
   )
 }
 

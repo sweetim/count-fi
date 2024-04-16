@@ -41,7 +41,12 @@ const ActionCounter: FC = () => {
   }
 
   return (
-    <Flex gap="middle" vertical>
+    <Flex
+      justify="center"
+      align="center"
+      gap="small"
+      vertical
+      style={{ height: "100%", width: "100%", paddingTop: "20px", paddingBottom: "20px" }}>
       <Button type="text"
         icon={<PlusIcon
           width={32}
@@ -50,7 +55,7 @@ const ActionCounter: FC = () => {
         size={"large"}
         shape="circle"
         onClick={incrementClickHandler} />
-      <Title>{value}</Title>
+      <Title style={{ fontSize: "8rem", margin: 0 }}>{value}</Title>
       <Button type="text"
         icon={<MinusIcon
           width={32}
