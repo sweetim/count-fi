@@ -1,14 +1,25 @@
 import { Button, Flex, Typography } from "antd"
-import { FC, useEffect, useState } from "react"
-import { PlusIcon, MinusIcon } from "@heroicons/react/20/solid"
+import { CSSProperties, FC, useEffect, useState } from "react"
+import { MinusOutlined, PlusOutlined } from "@ant-design/icons"
 
-import { decrementTransactionData, getValue, incrementTransactionData } from "../contract"
 import { useWallet } from "@aptos-labs/wallet-adapter-react"
+import { decrementTransactionData, getValue, incrementTransactionData } from "../contract"
+
 import { getAptosClient } from "@/common/aptosClient"
 
 const { Title } = Typography
 
 const aptos = getAptosClient()
+
+const actionButtonStyle: CSSProperties = {
+  width: "48px",
+  height: "48px"
+}
+
+const actionIconStyle: CSSProperties = {
+  fontSize: "32px",
+  color: "#FFF"
+}
 
 const ActionCounter: FC = () => {
   const { signAndSubmitTransaction, account } = useWallet()
@@ -46,22 +57,18 @@ const ActionCounter: FC = () => {
       align="center"
       gap="small"
       vertical
-      style={{ height: "100%", width: "100%", paddingTop: "20px", paddingBottom: "20px" }}>
+      style={{ height: "100%", width: "100%", paddingTop: "20px", paddingBottom: "10px" }}>
       <Button type="text"
-        icon={<PlusIcon
-          width={32}
-          height={32}
-          color="#FFF" />}
-        size={"large"}
+        style={actionButtonStyle}
+        icon={<PlusOutlined
+          style={actionIconStyle} />}
         shape="circle"
         onClick={incrementClickHandler} />
       <Title style={{ fontSize: "8rem", margin: 0 }}>{value}</Title>
       <Button type="text"
-        icon={<MinusIcon
-          width={32}
-          height={32}
-          color="#FFF" />}
-        size={"large"}
+        style={actionButtonStyle}
+        icon={<MinusOutlined
+          style={actionIconStyle} />}
         shape="circle"
         onClick={decrementClickHandler} />
     </Flex>
