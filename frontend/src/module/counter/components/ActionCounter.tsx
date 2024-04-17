@@ -1,4 +1,4 @@
-import { Button, Flex, Typography } from "antd"
+import { Alert, Button, Flex, Typography } from "antd"
 import { CSSProperties, FC, useEffect, useState } from "react"
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons"
 
@@ -30,7 +30,7 @@ const ActionCounter: FC = () => {
   }, [])
 
   async function incrementClickHandler() {
-    if (!account) throw new Error("account not available")
+    if (!account) return;
 
     try {
       const response: any = await signAndSubmitTransaction(incrementTransactionData())
@@ -41,7 +41,7 @@ const ActionCounter: FC = () => {
   }
 
   async function decrementClickHandler() {
-    if (!account) throw new Error("account not available")
+    if (!account) return;
 
     try {
       const response: any = await signAndSubmitTransaction(decrementTransactionData())
@@ -52,8 +52,7 @@ const ActionCounter: FC = () => {
   }
 
   async function randomClickHandler() {
-    console.log("here")
-    if (!account) throw new Error("account not available")
+    if (!account) return;
 
     try {
       const response: any = await signAndSubmitTransaction(randomTransactionData())
@@ -70,19 +69,19 @@ const ActionCounter: FC = () => {
       gap="small"
       vertical
       style={{ height: "100%", width: "100%" }}>
-      <Button type="text"
+      {account && <Button type="text"
         style={actionButtonStyle}
         icon={<PlusOutlined
           style={actionIconStyle} />}
         shape="circle"
-        onClick={incrementClickHandler} />
-      <Title style={{ fontSize: "8rem", margin: 0, cursor: "pointer" }} onClick={randomClickHandler}>{value}</Title>
-      <Button type="text"
+        onClick={incrementClickHandler} />}
+      <Title style={{ fontSize: "8rem", margin: 0, cursor: `${account ? "pointer" : "default"}` }} onClick={randomClickHandler}>{value}</Title>
+      {account && <Button type="text"
         style={actionButtonStyle}
         icon={<MinusOutlined
           style={actionIconStyle} />}
         shape="circle"
-        onClick={decrementClickHandler} />
+        onClick={decrementClickHandler} />}
     </Flex>
   )
 }
