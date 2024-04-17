@@ -24,12 +24,20 @@ module aptos_counter::counter {
         records: SmartVector<CounterRecord>
     }
 
-    #[event]
     struct CounterRecord has key, store, drop, copy {
         timestamp_us: u64,
         user: address,
         action: u8,
     }
+
+    #[event]
+    struct CounterRecordEvent has key, store, drop, copy {
+        timestamp_us: u64,
+        user: address,
+        action: u8,
+        value: u128
+    }
+
 
     fun init_module(owner: &signer) {
         move_to(owner, Counter {
@@ -50,12 +58,20 @@ module aptos_counter::counter {
         perform_action(user, COUNTER_ACTION_INCREMENT);
     }
 
+    inline fun get_random_action(): u8 {
+        randomness::u8_range(
+            COUNTER_ACTION_INCREMENT,
+            COUNTER_ACTION_DECREMENT + 1)
+    }
+
     fun perform_action(user: &signer, action: u8) acquires Counter {
         let counter_record = CounterRecord {
             action,
             timestamp_us: timestamp::now_microseconds(),
             user: signer::address_of(user)
         };
+
+        let action = if (action == COUNTER_ACTION_RANDOM) get_random_action() else action;
 
         let counter = borrow_global_mut<Counter>(@aptos_counter);
         update_value_from_action(&mut counter.value, action);
@@ -65,7 +81,12 @@ module aptos_counter::counter {
             aptos_counter::ft::mint_to(signer::address_of(user), 1);
         };
 
-        event::emit(counter_record);
+        event::emit(CounterRecordEvent {
+            action: counter_record.action,
+            timestamp_us: counter_record.timestamp_us,
+            user: counter_record.user,
+            value: counter.value,
+        });
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
@@ -88,7 +109,7 @@ module aptos_counter::counter {
         increment(user_1);
         assert!(get_value() == 3, 2);
 
-        let event_length = vector::length(&emitted_events<CounterRecord>());
+        let event_length = vector::length(&emitted_events<CounterRecordEvent>());
         assert!(event_length == 3, 3);
     }
 
@@ -143,7 +164,7 @@ module aptos_counter::counter {
         decrement(user_1);
         assert!(get_value() == 996, 1);
 
-        let event_length = vector::length(&emitted_events<CounterRecord>());
+        let event_length = vector::length(&emitted_events<CounterRecordEvent>());
         assert!(event_length == 4, 3);
     }
 
@@ -165,11 +186,7 @@ module aptos_counter::counter {
 
     #[randomness]
     entry fun random(user: &signer) acquires Counter {
-        let random_action = randomness::u8_range(
-            COUNTER_ACTION_INCREMENT,
-            COUNTER_ACTION_DECREMENT + 1);
-
-        perform_action(user, random_action);
+        perform_action(user, COUNTER_ACTION_RANDOM);
     }
 
     fun update_value_from_action(value: &mut u128, action: u8) {
@@ -205,34 +222,68 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_1));
         account::create_account_for_test(signer::address_of(user_2));
 
-        let actual = vector[];
+        let actual_value = vector[];
 
         init_module(owner);
-        vector::push_back(&mut actual, get_value());
+        vector::push_back(&mut actual_value, get_value());
 
         random(user_1);
-        vector::push_back(&mut actual, get_value());
+        vector::push_back(&mut actual_value, get_value());
 
         random(user_2);
-        vector::push_back(&mut actual, get_value());
+        vector::push_back(&mut actual_value, get_value());
 
         random(user_2);
-        vector::push_back(&mut actual, get_value());
+        vector::push_back(&mut actual_value, get_value());
 
         random(user_2);
-        vector::push_back(&mut actual, get_value());
+        vector::push_back(&mut actual_value, get_value());
 
         random(user_1);
-        vector::push_back(&mut actual, get_value());
+        vector::push_back(&mut actual_value, get_value());
 
-        let expected: vector<u128> = vector[
+        let expected_value: vector<u128> = vector[
             0, 1, 0, 0, 1, 2
         ];
 
-        vector::zip(actual, expected, |a, e| assert!(a == e, 1));
+        vector::zip(actual_value, expected_value, |a, e| assert!(a == e, 1));
 
-        let event_length = vector::length(&emitted_events<CounterRecord>());
-        assert!(event_length == 5, 3);
+        let all_emitted_events = &emitted_events<CounterRecordEvent>();
+
+        let expected = vector[
+            CounterRecordEvent {
+                timestamp_us: 0,
+                user: @0x123,
+                action: 3,
+                value: 1,
+            },
+            CounterRecordEvent {
+                timestamp_us: 0,
+                user: @0x321,
+                action: 3,
+                value: 0,
+            },
+            CounterRecordEvent {
+                timestamp_us: 0,
+                user: @0x321,
+                action: 3,
+                value: 0,
+            },
+            CounterRecordEvent {
+                timestamp_us: 0,
+                user: @0x321,
+                action: 3,
+                value: 1,
+            },
+            CounterRecordEvent {
+                timestamp_us: 0,
+                user: @0x123,
+                action: 3,
+                value: 2,
+            }
+        ];
+
+        vector::zip_ref(all_emitted_events, &expected, |a, b| assert!(a == b, 1));
     }
 
     #[view]
