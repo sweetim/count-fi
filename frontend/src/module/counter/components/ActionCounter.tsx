@@ -1,4 +1,4 @@
-import { Alert, Button, Flex, Typography } from "antd"
+import { Button, Flex, Typography } from "antd"
 import { CSSProperties, FC, useEffect, useState } from "react"
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons"
 
@@ -75,7 +75,8 @@ const ActionCounter: FC = () => {
           style={actionIconStyle} />}
         shape="circle"
         onClick={incrementClickHandler} />}
-      <Title style={{ fontSize: "8rem", margin: 0, cursor: `${account ? "pointer" : "default"}` }} onClick={randomClickHandler}>{value}</Title>
+      <Title style={{ fontSize: "8rem", margin: 0, cursor: `${account ? "pointer" : "default"}` }}
+        onClick={randomClickHandler}>{value}</Title>
       {account && <Button type="text"
         style={actionButtonStyle}
         icon={<MinusOutlined
