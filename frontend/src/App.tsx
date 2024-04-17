@@ -40,7 +40,7 @@ const App: FC = () => {
             ref={ref}
             xs={24}
             md={{ flex: "auto" }}
-            style={{ paddingTop: "1rem", paddingBottom: "1rem"}}>
+            style={{ paddingTop: "0.5rem", paddingBottom: "0.5rem"}}>
             <ActionCounter />
           </Col>
           {allRecords.length > 0 && <Col xs={24}
