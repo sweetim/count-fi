@@ -14,25 +14,26 @@ const App: FC = () => {
   }, [])
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ height: "100vh" }}>
       <Header style={{ padding: "15px" }}>
-        <Flex style={{ height: "100%"}}
+        <Flex style={{ height: "100%" }}
           justify="space-between"
           align="center">
-          <CounterLogo style={{ width: "32px", fill: "white "}}/>
+          <CounterLogo style={{ width: "32px", fill: "white " }} />
           <WalletSelector />
         </Flex>
 
       </Header>
       <Content>
-        <Row style={{ minHeight: "100%" }}>
+        <Row
+          style={{ height: "100%" }}>
           <Col
             xs={24}
-            md={12}>
+            md={8}>
             <ActionCounter />
           </Col>
           <Col xs={24}
-            md={12}
+            md={16}
             style={{ overflow: "auto", padding: "20px", height: "100%" }}>
             <RecordTimeline records={allRecords} />
           </Col>
