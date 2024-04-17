@@ -21,7 +21,7 @@ const App: FC = () => {
   const screens = useBreakpoint()
   useEffect(() => {
     setHeight(screens.xs && ref.current?.clientHeight || 0)
-  }, [screens.xs])
+  }, [screens.xs, allRecords])
 
   return (
     <Layout style={{ height: "100vh" }}>
@@ -39,7 +39,8 @@ const App: FC = () => {
           <Col
             ref={ref}
             xs={24}
-            md={{ flex: "auto" }}>
+            md={{ flex: "auto" }}
+            style={{ paddingTop: "1rem", paddingBottom: "1rem"}}>
             <ActionCounter />
           </Col>
           {allRecords.length > 0 && <Col xs={24}

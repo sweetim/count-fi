@@ -69,7 +69,7 @@ const ActionCounter: FC = () => {
       align="center"
       gap="small"
       vertical
-      style={{ height: "100%", width: "100%", paddingTop: "20px", paddingBottom: "10px" }}>
+      style={{ height: "100%", width: "100%" }}>
       <Button type="text"
         style={actionButtonStyle}
         icon={<PlusOutlined
