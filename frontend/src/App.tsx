@@ -22,7 +22,7 @@ const CounterApp: FC = () => {
     getAllRecords().then(result => setAllRecords(result))
   }, [])
 
-  const { channel } = useChannel(
+  useChannel(
     ABLY_APTOS_COUNTER_CHANNEL_NAME,
     (message) => {
       const data: CounterRecordEvent = JSON.parse(message.data)

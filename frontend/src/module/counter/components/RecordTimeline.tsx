@@ -33,13 +33,13 @@ const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
     )
   }
 
-  const getPosition = (action: CounterAction) => {
-    switch (action) {
-      case CounterAction.Increment: return "left";
-      case CounterAction.Decrement: return "right";
-      case CounterAction.Random: return Math.floor(Math.random() * 2) ? "left" : "right";
-    }
-  }
+  // const getPosition = (action: CounterAction) => {
+  //   switch (action) {
+  //     case CounterAction.Increment: return "left";
+  //     case CounterAction.Decrement: return "right";
+  //     case CounterAction.Random: return Math.floor(Math.random() * 2) ? "left" : "right";
+  //   }
+  // }
 
   const getActionIcon = (action: CounterAction) => {
     const ACTION_ICONS: Record<CounterAction, JSX.Element> = {
