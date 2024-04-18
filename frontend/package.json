@@ -14,6 +14,7 @@
     "@aptos-labs/ts-sdk": "^1.12.2",
     "@aptos-labs/wallet-adapter-ant-design": "^2.1.0",
     "@aptos-labs/wallet-adapter-react": "^2.3.0",
+    "ably": "^2.0.3",
     "antd": "^5.16.2",
     "date-fns": "^3.6.0",
     "petra-plugin-wallet-adapter": "^0.4.5",

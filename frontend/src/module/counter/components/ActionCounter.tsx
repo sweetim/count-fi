@@ -1,9 +1,9 @@
 import { Button, Flex, Typography } from "antd"
-import { CSSProperties, FC, useEffect, useState } from "react"
+import { CSSProperties, FC } from "react"
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons"
 
 import { useWallet } from "@aptos-labs/wallet-adapter-react"
-import { decrementTransactionData, getValue, incrementTransactionData, randomTransactionData } from "../contract"
+import { decrementTransactionData, incrementTransactionData, randomTransactionData } from "../contract"
 
 import { getAptosClient } from "@/common/aptosClient"
 
@@ -20,14 +20,12 @@ const actionIconStyle: CSSProperties = {
   fontSize: "32px",
   color: "#FFF"
 }
+export type ActionCounterProps = {
+  value: string
+}
 
-const ActionCounter: FC = () => {
+const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
   const { signAndSubmitTransaction, account } = useWallet()
-  const [value, setValue] = useState("...")
-
-  useEffect(() => {
-    getValue().then(v => setValue(v.toString()))
-  }, [])
 
   async function incrementClickHandler() {
     if (!account) return;

@@ -2,18 +2,41 @@ import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
 import { Col, Flex, Grid, Layout, Row } from 'antd'
 import { Content, Header } from 'antd/es/layout/layout'
 import { FC, useEffect, useState } from 'react'
-import { CounterRecord, getAllRecords } from './module/counter/contract';
+import { CounterRecord, CounterRecordEvent, getAllRecords, getValue } from './module/counter/contract';
 import { ActionCounter, RecordTimeline } from './module/counter/components';
 import CounterLogo from './icons/CounterLogo';
+import { ChannelProvider, useChannel } from 'ably/react';
+import { ABLY_APTOS_COUNTER_CHANNEL_NAME } from './common';
 
 const { useBreakpoint } = Grid;
 
-const App: FC = () => {
+const CounterApp: FC = () => {
+  const [value, setValue] = useState("...")
   const [allRecords, setAllRecords] = useState<CounterRecord[]>([])
+
+  useEffect(() => {
+    getValue().then(v => setValue(v.toString()))
+  }, [])
 
   useEffect(() => {
     getAllRecords().then(result => setAllRecords(result))
   }, [])
+
+  const { channel } = useChannel(
+    ABLY_APTOS_COUNTER_CHANNEL_NAME,
+    (message) => {
+      const data: CounterRecordEvent = JSON.parse(message.data)
+
+      if (allRecords.length === 0) return;
+
+      const { timestamp_us } = allRecords[0]
+      const isLatest = Number(data.timestamp_us) > timestamp_us
+
+      if (isLatest) {
+        setAllRecords(prev => [data, ...prev])
+        setValue(data.value)
+      }
+    });
 
   const screens = useBreakpoint()
 
@@ -22,8 +45,8 @@ const App: FC = () => {
 
     return (
       <>
-        <Row style={{ paddingTop: "0.25rem", paddingBottom: "0.25rem", height: `${getHeight}` }}>
-          <ActionCounter />
+        <Row style={{ paddingTop: "0.5rem", paddingBottom: "0.5rem", height: `${getHeight}` }}>
+          <ActionCounter value={value} />
         </Row>
         {allRecords.length > 0 && <Row style={{ height: "100%", overflow: "auto", padding: "20px" }}>
           <RecordTimeline records={allRecords} />
@@ -37,7 +60,7 @@ const App: FC = () => {
       <Row
         style={{ height: "100%" }}>
         <Col sm={{ flex: "auto" }}>
-          <ActionCounter />
+          <ActionCounter value={value} />
         </Col>
         {allRecords.length > 0 && <Col span={16}
           style={{ overflow: "auto", padding: "20px", height: "100%" }}>
@@ -58,9 +81,17 @@ const App: FC = () => {
         </Flex>
       </Header>
       <Content style={{ display: "flex", flexDirection: "column" }}>
-        { screens.xs ? renderMobile() : renderDesktop() }
+        {screens.xs ? renderMobile() : renderDesktop()}
       </Content>
     </Layout>
+  )
+}
+
+const App: FC = () => {
+  return (
+    <ChannelProvider channelName={ABLY_APTOS_COUNTER_CHANNEL_NAME}>
+      <CounterApp />
+    </ChannelProvider >
   )
 }
 

@@ -13,16 +13,6 @@ export type RecordTimelineProps = {
 const { Text, Link } = Typography
 const { useBreakpoint } = Grid;
 
-const getActionIcon = (action: CounterAction) => {
-  const ACTION_ICONS: Record<CounterAction, JSX.Element> = {
-    1: <PlusCircleOutlined style={{ color: "#bef264" }} />,
-    2: <MinusCircleOutlined style={{ color: "#f43f5e" }} />,
-    3: <QuestionCircleOutlined spin style={{ color: "cyan" }} />,
-  }
-
-  return ACTION_ICONS[action]
-}
-
 const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
   const recordTemplate = (record: CounterRecord) => {
     const addressUrl = getAptosExplorerUrl(record.user)
@@ -32,7 +22,7 @@ const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
 
     return (
       <>
-        <Space.Compact direction="vertical" >
+        <Space.Compact direction="vertical">
           <Link href={addressUrl} target="_blank" style={{ color: "white" }}>
             {record.user}
           </Link>
@@ -43,13 +33,31 @@ const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
     )
   }
 
+  const getPosition = (action: CounterAction) => {
+    switch (action) {
+      case CounterAction.Increment: return "left";
+      case CounterAction.Decrement: return "right";
+      case CounterAction.Random: return Math.floor(Math.random() * 2) ? "left" : "right";
+    }
+  }
+
+  const getActionIcon = (action: CounterAction) => {
+    const ACTION_ICONS: Record<CounterAction, JSX.Element> = {
+      1: <PlusCircleOutlined style={{ color: "#bef264" }} />,
+      2: <MinusCircleOutlined style={{ color: "#f43f5e" }} />,
+      3: <QuestionCircleOutlined spin style={{ color: "cyan" }} />,
+    }
+
+    return ACTION_ICONS[action]
+  }
+
   const timelineItems = records.map<TimelineItemProps>(record => ({
+    // position: getPosition(record.action),
     dot: getActionIcon(record.action),
     children: recordTemplate(record)
   }))
 
   const screens = useBreakpoint()
-
   const mode = screens.xs ? "left" : "alternate"
 
   return (

@@ -7,13 +7,20 @@ export enum CounterAction {
   Random
 }
 
+export type CounterRecordEvent = {
+  timestamp_us: number,
+  action: CounterAction,
+  user: string,
+  value: string
+}
+
 export type CounterRecord = {
   timestamp_us: number,
   action: CounterAction,
   user: string
 }
 
-const MODULE_ADDRESS = "0xe23aa62de4861c6fe0579e5c284ea7ad9be5777e61f976bfcc178269791f28fe"
+const MODULE_ADDRESS = "0x25eeef73f1b22092fc2a57a8647f12afb1606d16ebe0c4afd675517402dd2e56"
 
 const aptos = getAptosClient()
 
