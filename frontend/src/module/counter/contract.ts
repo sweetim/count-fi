@@ -20,7 +20,7 @@ export type CounterRecord = {
   user: string
 }
 
-const MODULE_ADDRESS = "0x25eeef73f1b22092fc2a57a8647f12afb1606d16ebe0c4afd675517402dd2e56"
+const MODULE_ADDRESS = "0x6b2cf48e40e3b651c309dc444d0d094ed9c342089289c8bf50c4a5646271f20b"
 
 const aptos = getAptosClient()
 

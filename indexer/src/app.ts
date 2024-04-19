@@ -13,7 +13,7 @@ const {
 
 const GRPC_STREAM_ENDPOINT_URL = "grpc.devnet.aptoslabs.com:443"
 const ABLY_APTOS_COUNTER_CHANNEL_NAME = "aptos-counter"
-const APTOS_COUNTER_MODULE_ADDRESS = "0x25eeef73f1b22092fc2a57a8647f12afb1606d16ebe0c4afd675517402dd2e56"
+const APTOS_COUNTER_MODULE_ADDRESS = "0x6b2cf48e40e3b651c309dc444d0d094ed9c342089289c8bf50c4a5646271f20b"
 
 const aptosClient = new Aptos(new AptosConfig({
   network: Network.DEVNET
