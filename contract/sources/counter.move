@@ -6,7 +6,7 @@ module aptos_counter::counter {
     use aptos_std::smart_vector;
     use aptos_std::smart_vector::SmartVector;
     use aptos_framework::event;
-    use aptos_framework::randomness;
+    // use aptos_framework::randomness;
 
     #[test_only]
     use aptos_framework::account;
@@ -59,9 +59,12 @@ module aptos_counter::counter {
     }
 
     inline fun get_random_action(): u8 {
-        randomness::u8_range(
-            COUNTER_ACTION_INCREMENT,
-            COUNTER_ACTION_DECREMENT + 1)
+        // randomness::u8_range(
+        //     COUNTER_ACTION_INCREMENT,
+        //     COUNTER_ACTION_DECREMENT + 1)
+
+        let is_even = timestamp::now_microseconds() % 2 == 0;
+        if (is_even) COUNTER_ACTION_INCREMENT else COUNTER_ACTION_DECREMENT
     }
 
     fun perform_action(user: &signer, action: u8) acquires Counter {
@@ -215,8 +218,8 @@ module aptos_counter::counter {
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
     public fun test_random(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter {
         timestamp::set_time_has_started_for_testing(framework);
-        randomness::initialize_for_testing(framework);
-        randomness::set_seed(x"0000000000000000000000000000000000000000000000000000000000000001");
+        // randomness::initialize_for_testing(framework);
+        // randomness::set_seed(x"0000000000000000000000000000000000000000000000000000000000000001");
 
         let owner = &account::create_account_for_test(@aptos_counter);
         account::create_account_for_test(signer::address_of(user_1));
@@ -227,18 +230,23 @@ module aptos_counter::counter {
         init_module(owner);
         vector::push_back(&mut actual_value, get_value());
 
+        timestamp::update_global_time_for_test(2);
         random(user_1);
         vector::push_back(&mut actual_value, get_value());
 
+        timestamp::update_global_time_for_test(3);
         random(user_2);
         vector::push_back(&mut actual_value, get_value());
 
+        timestamp::update_global_time_for_test(5);
         random(user_2);
         vector::push_back(&mut actual_value, get_value());
 
+        timestamp::update_global_time_for_test(6);
         random(user_2);
         vector::push_back(&mut actual_value, get_value());
 
+        timestamp::update_global_time_for_test(8);
         random(user_1);
         vector::push_back(&mut actual_value, get_value());
 
@@ -252,31 +260,31 @@ module aptos_counter::counter {
 
         let expected = vector[
             CounterRecordEvent {
-                timestamp_us: 0,
+                timestamp_us: 2,
                 user: @0x123,
                 action: 3,
                 value: 1,
             },
             CounterRecordEvent {
-                timestamp_us: 0,
+                timestamp_us: 3,
                 user: @0x321,
                 action: 3,
                 value: 0,
             },
             CounterRecordEvent {
-                timestamp_us: 0,
+                timestamp_us: 5,
                 user: @0x321,
                 action: 3,
                 value: 0,
             },
             CounterRecordEvent {
-                timestamp_us: 0,
+                timestamp_us: 6,
                 user: @0x321,
                 action: 3,
                 value: 1,
             },
             CounterRecordEvent {
-                timestamp_us: 0,
+                timestamp_us: 8,
                 user: @0x123,
                 action: 3,
                 value: 2,
