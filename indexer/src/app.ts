@@ -1,20 +1,30 @@
 import { aptos } from "@aptos-labs/aptos-protos";
 import { ChannelCredentials, Metadata } from "@grpc/grpc-js";
 import { Realtime } from "ably"
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk"
+import Fastify from "fastify";
 
+import "dotenv/config"
 
+const {
+  GRPC_STREAM_API_KEY,
+  ABLY_API_KEY
+} = process.env
 
-const STARTING_VERSION = "986962"
-const APTOS_DEVNET_CHAIN_ID = 131
+const GRPC_STREAM_ENDPOINT_URL = "grpc.devnet.aptoslabs.com:443"
+const ABLY_APTOS_COUNTER_CHANNEL_NAME = "aptos-counter"
 const APTOS_COUNTER_MODULE_ADDRESS = "0x25eeef73f1b22092fc2a57a8647f12afb1606d16ebe0c4afd675517402dd2e56"
-const APTOS_COUNTER_EVENT_TYPE = `${APTOS_COUNTER_MODULE_ADDRESS}::counter::CounterRecordEvent`
+
+const aptosClient = new Aptos(new AptosConfig({
+  network: Network.DEVNET
+}))
 
 const client = new aptos.indexer.v1.RawDataClient(
   GRPC_STREAM_ENDPOINT_URL,
   ChannelCredentials.createSsl(),
   {
-    "grpc.keepalive_permit_without_calls": 1,
-    // "grpc.keepalive_time_ms": 1000,
+    // "grpc.keepalive_permit_without_calls": 1,
+    "grpc.keepalive_time_ms": 1000,
     // 0 - No compression
     // 1 - Compress with DEFLATE algorithm
     // 2 - Compress with GZIP algorithm
@@ -38,40 +48,44 @@ metadata.set(
   `Bearer ${GRPC_STREAM_API_KEY}`,
 )
 
-const request = {
-  startingVersion: BigInt(STARTING_VERSION)
-}
+const ably = new Realtime(ABLY_API_KEY!)
+const channel = ably.channels.get(ABLY_APTOS_COUNTER_CHANNEL_NAME);
 
-const ably = new Realtime(ABLY_API_KEY)
-const channel = ably.channels.get(ABLY_APTOS_COUNTER_CHANNEL_NAME)
+const fastify = Fastify({
+  logger: true
+});
 
-const stream = client.getTransactions(request, metadata)
-stream.on(
-  "data",
-  async (response: aptos.indexer.v1.TransactionsResponse) => {
-    stream.pause()
-    const transactions = response.transactions || []
-    for (const transaction of transactions) {
-      if (transaction.type !== aptos.transaction.v1.Transaction_TransactionType.TRANSACTION_TYPE_USER) {
-        continue;
-      }
 
-      const events = transaction.user?.events || []
-      for (const ev of events) {
-        if (ev.typeStr?.includes("0x25eeef73f1b22092fc2a57a8647f12afb1606d16ebe0c4afd675517402dd2e56")) {
-          await channel.publish(ev)
-          console.log(ev)
+(async () => {
+  const latestBlock = await aptosClient.getIndexerLastSuccessVersion()
+  console.log(`started listening from block (${latestBlock})`)
+
+  const request = {
+    startingVersion: BigInt(latestBlock)
+  }
+
+  const stream = client.getTransactions(request, metadata)
+  stream.on(
+    "data",
+    async (response: aptos.indexer.v1.TransactionsResponse) => {
+      stream.pause()
+      const transactions = response.transactions || []
+      for (const transaction of transactions) {
+        if (transaction.type !== aptos.transaction.v1.Transaction_TransactionType.TRANSACTION_TYPE_USER) {
+          continue;
         }
-        // console.log(transaction.version, ev.typeStr)
+
+        const events = transaction.user?.events || []
+        for (const ev of events) {
+          if (ev.typeStr?.includes(APTOS_COUNTER_MODULE_ADDRESS)) {
+            await channel.publish(ev)
+            console.log(ev)
+          }
+        }
       }
 
-      // console.log(transaction.user?.events)
-    }
+      stream.resume()
+    })
 
-    // const aptosCounterEv = response.transactions?.
-    //   filter(r => r.blockMetadata?.events?.some(ev => ev.typeStr === APTOS_COUNTER_EVENT_TYPE))
-
-    // console.log(aptosCounterEv)
-    stream.resume()
-    // console.log(response.transactions && response.transactions[0].blockMetadata?.events)
-  })
+    await fastify.listen({ port: 3000 })
+})()
