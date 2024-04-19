@@ -24,7 +24,7 @@ const client = new aptos.indexer.v1.RawDataClient(
   ChannelCredentials.createSsl(),
   {
     // "grpc.keepalive_permit_without_calls": 1,
-    "grpc.keepalive_time_ms": 1000,
+    "grpc.keepalive_time_ms": 10000000,
     // 0 - No compression
     // 1 - Compress with DEFLATE algorithm
     // 2 - Compress with GZIP algorithm
@@ -54,7 +54,6 @@ const channel = ably.channels.get(ABLY_APTOS_COUNTER_CHANNEL_NAME);
 const fastify = Fastify({
   logger: true
 });
-
 
 (async () => {
   const latestBlock = await aptosClient.getIndexerLastSuccessVersion()
