@@ -16,7 +16,7 @@ const ABLY_APTOS_COUNTER_CHANNEL_NAME = "aptos-counter"
 const APTOS_COUNTER_MODULE_ADDRESS = "0x6b2cf48e40e3b651c309dc444d0d094ed9c342089289c8bf50c4a5646271f20b"
 
 const aptosClient = new Aptos(new AptosConfig({
-  network: Network.DEVNET
+  network: Network.TESTNET
 }))
 
 const client = new aptos.indexer.v1.RawDataClient(
