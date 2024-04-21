@@ -25,17 +25,18 @@ const CounterApp: FC = () => {
   useChannel(
     ABLY_APTOS_COUNTER_CHANNEL_NAME,
     (message) => {
-      const data: CounterRecordEvent = JSON.parse(message.data)
+      const data: CounterRecordEvent[] = message.data
 
       if (allRecords.length === 0) return;
 
-      const { timestamp_us } = allRecords[0]
-      const isLatest = Number(data.timestamp_us) > timestamp_us
+      data.sort((a, b) => Number(b.timestamp_us) - Number(a.timestamp_us))
 
-      if (isLatest) {
-        setAllRecords(prev => [data, ...prev])
-        setValue(data.value)
-      }
+      const latestData = data.filter(({ timestamp_us }) => timestamp_us > allRecords[0].timestamp_us)
+
+      if (latestData.length === 0) return;
+
+      setAllRecords(prev => [...latestData, ...prev])
+      setValue(latestData[0].value)
     });
 
   const screens = useBreakpoint()
