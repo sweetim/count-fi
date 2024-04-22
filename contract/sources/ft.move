@@ -10,8 +10,8 @@ module aptos_counter::ft {
 
     friend aptos_counter::counter;
 
-    const ASSETS_SYMBOL: vector<u8> = b"CNTR";
-    const ASSETS_NAME: vector<u8> = b"COUNTER";
+    const ASSETS_SYMBOL: vector<u8> = b"CNT";
+    const ASSETS_NAME: vector<u8> = b"COUNT";
     const MAX_SUPPLY: u128 = 1_000_000;
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -30,8 +30,8 @@ module aptos_counter::ft {
             string::utf8(ASSETS_NAME),
             string::utf8(ASSETS_SYMBOL),
             0,
-            string::utf8(b"https://static.thenounproject.com/png/304008-200.png"),
-            string::utf8(b"https://timx.co")
+            string::utf8(b"https://count.timx.co/count.svg"),
+            string::utf8(b"https://count.timx.co")
         );
 
         let mint_ref = fungible_asset::generate_mint_ref(construct_ref);
