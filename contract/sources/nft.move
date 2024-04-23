@@ -96,14 +96,16 @@ module aptos_counter::nft {
     #[test(framework = @0x1, user_1 = @0x123)]
     public fun test_nft_mint(framework: &signer, user_1: &signer) acquires NftCollectionCreator {
         timestamp::set_time_has_started_for_testing(framework);
+
         let owner = &account::create_account_for_test(@aptos_counter);
-        account::create_account_for_test(signer::address_of(user_1));
+        let user_1_address= signer::address_of(user_1);
+        account::create_account_for_test(user_1_address);
 
         init_module(owner);
-        mint(signer::address_of(user_1), 123);
+        mint(user_1_address, 123);
 
         let all_emitted_events = &emitted_events<CounterNftMintEvent>();
-        assert!(vector::length(all_emitted_events) == 1, 1);
+        assert!(vector::length(all_emitted_events) == 1, 2);
     }
 }
 

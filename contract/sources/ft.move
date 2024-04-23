@@ -7,6 +7,10 @@ module aptos_counter::ft {
     use aptos_framework::fungible_asset::{TransferRef, BurnRef, MintRef, Metadata};
     use aptos_framework::object::Object;
     use aptos_framework::primary_fungible_store;
+    #[test_only]
+    use std::signer;
+    #[test_only]
+    use aptos_framework::account;
 
     friend aptos_counter::counter;
 
@@ -61,6 +65,28 @@ module aptos_counter::ft {
     #[view]
     public fun get_ft_metadata(): Object<Metadata> {
         object::address_to_object(get_ft_address())
+    }
+
+    #[view]
+    public fun get_balance(user: address): u64 {
+        let store = primary_fungible_store::ensure_primary_store_exists(user, get_ft_metadata());
+        fungible_asset::balance(store)
+    }
+
+    #[test(user_1 = @0x123)]
+    public fun test_get_balance(user_1: &signer) acquires ManagedFT {
+        let owner = &account::create_account_for_test(@aptos_counter);
+        account::create_account_for_test(signer::address_of(user_1));
+        let user_1_address = signer::address_of(user_1);
+
+        init_module(owner);
+
+        let before_balance = get_balance(user_1_address);
+        mint_to(user_1_address, 100);
+        let after_balance = get_balance(user_1_address);
+
+        assert!(before_balance == 0, 0);
+        assert!(after_balance == 100, 0);
     }
 
     public(friend) fun is_exists(): bool {
