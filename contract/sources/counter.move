@@ -68,10 +68,11 @@ module aptos_counter::counter {
     }
 
     fun perform_action(user: &signer, action: u8) acquires Counter {
+        let user_address = signer::address_of(user);
         let counter_record = CounterRecord {
             action,
             timestamp_us: timestamp::now_microseconds(),
-            user: signer::address_of(user)
+            user: user_address
         };
 
         let action = if (action == COUNTER_ACTION_RANDOM) get_random_action() else action;
@@ -82,6 +83,10 @@ module aptos_counter::counter {
 
         if (aptos_counter::ft::is_exists()) {
             aptos_counter::ft::mint_to(signer::address_of(user), 1);
+        };
+
+        if (is_fibonacci(counter.value)) {
+            aptos_counter::nft::mint(user_address, counter.value);
         };
 
         event::emit(CounterRecordEvent {
@@ -366,5 +371,50 @@ module aptos_counter::counter {
         let actual = query_all_records();
 
         assert!(expected == actual, 1);
+    }
+
+    fun is_fibonacci(value: u128): bool {
+        if (value == 0) return true;
+        if (value == 1) return true;
+
+        let a = 0;
+        let b = 1;
+        let c = 0;
+
+        while (b < value) {
+            c = a + b;
+            a = b;
+            b = c;
+        };
+
+        b == value
+    }
+
+    #[test]
+    public fun test_is_fibonacci_true() {
+        let samples = vector[
+            0,
+            1,
+            2,
+            3,
+            5,
+            8,
+            12200160415121876738
+        ];
+
+        vector::enumerate_ref(&samples, |i, s| assert!(is_fibonacci(*s), i));
+    }
+
+    #[test]
+    public fun test_is_fibonacci_false() {
+        let samples = vector[
+            4,
+            6,
+            7,
+            9,
+            100,
+        ];
+
+        vector::enumerate_ref(&samples, |i, s| assert!(!is_fibonacci(*s), i));
     }
 }

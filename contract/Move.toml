@@ -4,14 +4,20 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-aptos_counter = "0xd1835ab282925fcd14f520223ea9d213b70141ce7829a9ec6b8b777c5d6ca8ae"
+#aptos_counter = "0xd1835ab282925fcd14f520223ea9d213b70141ce7829a9ec6b8b777c5d6ca8ae"
+aptos_counter = "_"
 
 [dev-addresses]
-
+aptos_counter = "0x42e1d98f60589e853d0a7d625f0974ae62037b84e39c025cdd0b9eb4c55fad6e"
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-core.git"
 rev = "testnet"
 subdir = "aptos-move/framework/aptos-framework"
+
+[dependencies.AptosTokenObjects]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "testnet"
+subdir = "aptos-move/framework/aptos-token-objects"
 
 [dev-dependencies]
