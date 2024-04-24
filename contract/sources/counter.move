@@ -12,6 +12,8 @@ module aptos_counter::counter {
     use aptos_framework::account;
     #[test_only]
     use aptos_framework::event::emitted_events;
+    #[test_only]
+    use aptos_counter::nft::init_module_for_testing;
 
     const COUNTER_ACTION_INCREMENT: u8 = 1;
     const COUNTER_ACTION_DECREMENT: u8 = 2;
@@ -107,6 +109,7 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_2));
 
         init_module(owner);
+        init_module_for_testing(owner);
 
         increment(user_1);
         assert!(get_value() == 1, 1);
@@ -142,6 +145,8 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_1));
 
         init_module(owner);
+        init_module_for_testing(owner);
+
         change_value(user_1, 1000);
     }
 
@@ -155,6 +160,7 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_2));
 
         init_module(owner);
+        init_module_for_testing(owner);
 
         assert!(get_value() == 0, 1);
         change_value(owner, 1000);
@@ -185,6 +191,7 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_1));
 
         init_module(owner);
+        init_module_for_testing(owner);
 
         decrement(user_1);
         decrement(user_1);
@@ -233,6 +240,8 @@ module aptos_counter::counter {
         let actual_value = vector[];
 
         init_module(owner);
+        init_module_for_testing(owner);
+
         vector::push_back(&mut actual_value, get_value());
 
         timestamp::update_global_time_for_test(2);
@@ -319,6 +328,7 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_1));
 
         init_module(owner);
+        init_module_for_testing(owner);
 
         increment(user_1);
         increment(user_1);
@@ -343,6 +353,7 @@ module aptos_counter::counter {
         account::create_account_for_test(signer::address_of(user_1));
 
         init_module(owner);
+        init_module_for_testing(owner);
 
         timestamp::fast_forward_seconds(1);
         increment(user_1);

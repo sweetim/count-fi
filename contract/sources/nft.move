@@ -93,6 +93,11 @@ module aptos_counter::nft {
         })
     }
 
+    #[test_only]
+    public fun init_module_for_testing(owner: &signer) {
+        init_module(owner);
+    }
+
     #[test(framework = @0x1, user_1 = @0x123)]
     public fun test_nft_mint(framework: &signer, user_1: &signer) acquires NftCollectionCreator {
         timestamp::set_time_has_started_for_testing(framework);
