@@ -8,7 +8,7 @@ authors = []
 aptos_counter = "_"
 
 [dev-addresses]
-aptos_counter = "0x42e1d98f60589e853d0a7d625f0974ae62037b84e39c025cdd0b9eb4c55fad6e"
+aptos_counter = "0xd0b18be81b732b64edaf62b54ad1a5aab1bbe37cb2370d5b7c06042ca55d9e0b"
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-core.git"

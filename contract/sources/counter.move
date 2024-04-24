@@ -6,6 +6,7 @@ module aptos_counter::counter {
     use aptos_std::smart_vector;
     use aptos_std::smart_vector::SmartVector;
     use aptos_framework::event;
+
     // use aptos_framework::randomness;
 
     #[test_only]
@@ -40,12 +41,28 @@ module aptos_counter::counter {
         value: u128
     }
 
+    struct FibonacciCollection has key, store {
+        owners: SmartVector<CollectorOwner>,
+        next_index: u128,
+    }
+
+    struct CollectorOwner has key, store {
+        timestamp_us: u64,
+        user: address,
+        value: u128,
+        index: u128,
+    }
 
     fun init_module(owner: &signer) {
         move_to(owner, Counter {
             value: 0,
             records: smart_vector::new()
-        })
+        });
+
+        move_to(owner, FibonacciCollection {
+            next_index: 1,
+            owners: smart_vector::new<CollectorOwner>()
+        });
     }
 
     #[test]
@@ -56,7 +73,7 @@ module aptos_counter::counter {
         assert!(get_value() == 0, 1);
     }
 
-    public entry fun increment(user: &signer) acquires Counter {
+    public entry fun increment(user: &signer) acquires Counter, FibonacciCollection {
         perform_action(user, COUNTER_ACTION_INCREMENT);
     }
 
@@ -69,11 +86,12 @@ module aptos_counter::counter {
         if (is_even) COUNTER_ACTION_INCREMENT else COUNTER_ACTION_DECREMENT
     }
 
-    fun perform_action(user: &signer, action: u8) acquires Counter {
+    fun perform_action(user: &signer, action: u8) acquires Counter, FibonacciCollection {
+        let current_timestamp_us = timestamp::now_microseconds();
         let user_address = signer::address_of(user);
         let counter_record = CounterRecord {
             action,
-            timestamp_us: timestamp::now_microseconds(),
+            timestamp_us: current_timestamp_us,
             user: user_address
         };
 
@@ -87,9 +105,7 @@ module aptos_counter::counter {
             aptos_counter::ft::mint_to(signer::address_of(user), 1);
         };
 
-        if (is_fibonacci(counter.value)) {
-            aptos_counter::nft::mint(user_address, counter.value);
-        };
+        mint_when_value_is_fibonacci(user, counter.value, current_timestamp_us);
 
         event::emit(CounterRecordEvent {
             action: counter_record.action,
@@ -99,8 +115,62 @@ module aptos_counter::counter {
         });
     }
 
+    fun mint_when_value_is_fibonacci(user: &signer, value: u128, timestamp_us: u64) acquires FibonacciCollection {
+        let user_address = signer::address_of(user);
+
+        let fibonacci_collection = borrow_global_mut<FibonacciCollection>(@aptos_counter);
+        let fibonacci_value = get_fibonacci_value(fibonacci_collection.next_index);
+
+        if (value == fibonacci_value) {
+            aptos_counter::nft::mint(user_address, value);
+
+            smart_vector::push_back(&mut fibonacci_collection.owners, CollectorOwner {
+                value,
+                index: fibonacci_collection.next_index,
+                timestamp_us,
+                user: user_address
+            });
+
+            fibonacci_collection.next_index = fibonacci_collection.next_index + 1;
+        }
+    }
+
+    #[test(framework = @0x1, user_1 = @0x123)]
+    public fun test_mint_when_value_is_fibonacci_true(framework: &signer, user_1: &signer) acquires FibonacciCollection {
+        timestamp::set_time_has_started_for_testing(framework);
+
+        let owner = &account::create_account_for_test(@aptos_counter);
+
+        account::create_account_for_test(signer::address_of(user_1));
+
+        init_module(owner);
+        init_module_for_testing(owner);
+
+        mint_when_value_is_fibonacci(user_1, 0, 0);
+
+        assert!(
+            smart_vector::length(&borrow_global<FibonacciCollection>(@aptos_counter).owners) == 1, 0);
+    }
+
+    #[test(framework = @0x1, user_1 = @0x123)]
+    public fun test_mint_when_value_is_fibonacci_false(framework: &signer, user_1: &signer) acquires FibonacciCollection {
+        timestamp::set_time_has_started_for_testing(framework);
+
+        let owner = &account::create_account_for_test(@aptos_counter);
+
+        account::create_account_for_test(signer::address_of(user_1));
+
+        init_module(owner);
+        init_module_for_testing(owner);
+
+        mint_when_value_is_fibonacci(user_1, 6, 0);
+
+        assert!(
+            smart_vector::is_empty(&borrow_global<FibonacciCollection>(@aptos_counter).owners), 0);
+    }
+
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
-    public fun test_increment(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter {
+    public fun test_increment(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter, FibonacciCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_counter);
@@ -124,7 +194,7 @@ module aptos_counter::counter {
         assert!(event_length == 3, 3);
     }
 
-    public entry fun decrement(user: &signer) acquires Counter {
+    public entry fun decrement(user: &signer) acquires Counter, FibonacciCollection {
         perform_action(user, COUNTER_ACTION_DECREMENT);
     }
 
@@ -151,7 +221,7 @@ module aptos_counter::counter {
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
-    public fun test_decrement(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter {
+    public fun test_decrement(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter, FibonacciCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_counter);
@@ -183,7 +253,7 @@ module aptos_counter::counter {
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_decrement_not_fail_when_zero(framework: &signer, user_1: &signer) acquires Counter {
+    public fun test_decrement_not_fail_when_zero(framework: &signer, user_1: &signer) acquires Counter, FibonacciCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_counter);
@@ -200,7 +270,7 @@ module aptos_counter::counter {
     }
 
     #[randomness]
-    entry fun random(user: &signer) acquires Counter {
+    entry fun random(user: &signer) acquires Counter, FibonacciCollection {
         perform_action(user, COUNTER_ACTION_RANDOM);
     }
 
@@ -228,7 +298,7 @@ module aptos_counter::counter {
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
-    public fun test_random(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter {
+    public fun test_random(framework: &signer, user_1: &signer, user_2: &signer) acquires Counter, FibonacciCollection {
         timestamp::set_time_has_started_for_testing(framework);
         // randomness::initialize_for_testing(framework);
         // randomness::set_seed(x"0000000000000000000000000000000000000000000000000000000000000001");
@@ -320,7 +390,7 @@ module aptos_counter::counter {
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_get_records_length(framework: &signer, user_1: &signer) acquires Counter {
+    public fun test_get_records_length(framework: &signer, user_1: &signer) acquires Counter, FibonacciCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_counter);
@@ -345,7 +415,7 @@ module aptos_counter::counter {
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_query_all_records_in_descending_order(framework: &signer, user_1: &signer) acquires Counter {
+    public fun test_query_all_records_in_descending_order(framework: &signer, user_1: &signer) acquires Counter, FibonacciCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_counter);
@@ -384,48 +454,37 @@ module aptos_counter::counter {
         assert!(expected == actual, 1);
     }
 
-    fun is_fibonacci(value: u128): bool {
-        if (value == 0) return true;
-        if (value == 1) return true;
+    fun get_fibonacci_value(n: u128): u128 {
+        if (n == 0) return 0;
+        if (n == 1) return 1;
 
         let a = 0;
         let b = 1;
-        let c = 0;
+        let _c = 0;
 
-        while (b < value) {
-            c = a + b;
+        for (i in 2..(n + 1)) {
+            _c = a + b;
             a = b;
-            b = c;
+            b = _c;
         };
 
-        b == value
+        b
     }
 
     #[test]
-    public fun test_is_fibonacci_true() {
+    public fun test_get_fibonacci_value() {
         let samples = vector[
             0,
+            1,
             1,
             2,
             3,
             5,
             8,
-            12200160415121876738
+            13,
+            21,
         ];
 
-        vector::enumerate_ref(&samples, |i, s| assert!(is_fibonacci(*s), i));
-    }
-
-    #[test]
-    public fun test_is_fibonacci_false() {
-        let samples = vector[
-            4,
-            6,
-            7,
-            9,
-            100,
-        ];
-
-        vector::enumerate_ref(&samples, |i, s| assert!(!is_fibonacci(*s), i));
+        vector::enumerate_ref(&samples, |i, s| assert!(get_fibonacci_value((i as u128)) == *s, i));
     }
 }
