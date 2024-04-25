@@ -65,7 +65,7 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
     }
   }
 
-  const countLeftToMint = Math.abs(Number(nextFibonacciValue) - Number(value))
+  const countLeftToMint = Math.abs(Number(nextFibonacciValue) - Number(value)) || "..."
 
   return (
     <Flex
@@ -88,7 +88,9 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
           style={actionIconStyle} />}
         shape="circle"
         onClick={decrementClickHandler} />}
-        <Text><Badge style={{color: "white", marginRight: "5px" }} count={countLeftToMint} overflowCount={100000} />count left to mint a fibonacci NFT</Text>
+        <Text>
+          <Badge style={{ background: "#fffb8f", marginRight: "5px" }} count={countLeftToMint} overflowCount={100000} />
+          count left to mint a fibonacci NFT</Text>
     </Flex>
   )
 }
