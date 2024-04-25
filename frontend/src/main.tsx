@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { ConfigProvider, ThemeConfig, theme } from 'antd'
 import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react'
 import { PetraWallet } from 'petra-plugin-wallet-adapter'
+import { PontemWallet } from '@pontem/wallet-adapter-plugin';
 import { AblyProvider } from 'ably/react'
 
 import './index.css'
@@ -13,7 +14,8 @@ import App from './App.tsx'
 import { getAblyClient } from "./common"
 
 const wallets = [
-  new PetraWallet()
+  new PetraWallet(),
+  new PontemWallet()
 ]
 
 const antThemeConfig: ThemeConfig = {
