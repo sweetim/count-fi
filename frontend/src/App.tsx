@@ -1,14 +1,14 @@
 import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
 import { Col, Flex, Grid, Layout, Row } from 'antd'
-import { Content, Header } from 'antd/es/layout/layout'
 import { FC, useEffect, useState } from 'react'
 import { CounterRecord, CounterRecordEvent, getAllRecords, getValue } from './module/counter/contract';
 import { ActionCounter, RecordTimeline } from './module/counter/components';
 import CounterLogo from './icons/CounterLogo';
 import { ChannelProvider, useChannel } from 'ably/react';
-import { ABLY_APTOS_COUNTER_CHANNEL_NAME } from './common';
+import { ABLY_APTOS_COUNTER_CHANNEL_NAME, getAptosClient } from './common';
 
 const { useBreakpoint } = Grid;
+const { Content, Header } = Layout
 
 const CounterApp: FC = () => {
   const [value, setValue] = useState("...")
@@ -19,7 +19,32 @@ const CounterApp: FC = () => {
   }, [])
 
   useEffect(() => {
-    getAllRecords().then(result => setAllRecords(result))
+    (async () => {
+      const aptos = getAptosClient()
+
+      const allRecords = await getAllRecords()
+
+      const uniqueUserAddress = [...new Set(allRecords.map(r => r.user))]
+      const uniqueUserANS = await Promise.all(uniqueUserAddress.map(async (address) => {
+        const ans = await aptos.ans.getPrimaryName({ address })
+
+        return {
+          ans: ans && `${ans}.apt`,
+          address
+        }
+      }))
+
+      const ansLUT = uniqueUserANS.reduce((acc: any, a) => {
+        return acc[a.address] = a.ans, acc
+      }, {})
+
+      const allRecordsWithAns = allRecords.map((record) => ({
+        ...record,
+        user: ansLUT[record.user] || record.user
+      }))
+
+      setAllRecords(allRecordsWithAns)
+    })()
   }, [])
 
   useChannel(
@@ -92,6 +117,7 @@ const App: FC = () => {
   return (
     <ChannelProvider channelName={ABLY_APTOS_COUNTER_CHANNEL_NAME}>
       <CounterApp />
+      {/* <ParticlesDemo/> */}
     </ChannelProvider >
   )
 }
