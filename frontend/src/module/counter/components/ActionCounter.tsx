@@ -1,13 +1,12 @@
-import { Button, Flex, Typography } from "antd"
-import { CSSProperties, FC } from "react"
+import { Badge, Button, Flex, Typography } from "antd"
+import { CSSProperties, FC, useEffect, useState } from "react"
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons"
-
 import { useWallet } from "@aptos-labs/wallet-adapter-react"
-import { decrementTransactionData, incrementTransactionData, randomTransactionData } from "../contract"
 
+import { decrementTransactionData, getNextFibonacciValue, incrementTransactionData, randomTransactionData } from "../contract"
 import { getAptosClient } from "@/common/aptosClient"
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 const aptos = getAptosClient()
 
@@ -26,6 +25,12 @@ export type ActionCounterProps = {
 
 const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
   const { signAndSubmitTransaction, account } = useWallet()
+
+  const [nextFibonacciValue, setNextFibonacciValue] = useState("...")
+
+  useEffect(() => {
+    getNextFibonacciValue().then(v => setNextFibonacciValue(v.toString()))
+  }, [value])
 
   async function incrementClickHandler() {
     if (!account) return;
@@ -60,6 +65,8 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
     }
   }
 
+  const countLeftToMint = Math.abs(Number(nextFibonacciValue) - Number(value))
+
   return (
     <Flex
       justify="center"
@@ -81,6 +88,7 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
           style={actionIconStyle} />}
         shape="circle"
         onClick={decrementClickHandler} />}
+        <Text><Badge style={{color: "white", marginRight: "5px" }} count={countLeftToMint} overflowCount={100000} />count left to mint a fibonacci NFT</Text>
     </Flex>
   )
 }

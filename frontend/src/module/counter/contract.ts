@@ -20,7 +20,7 @@ export type CounterRecord = {
   user: string
 }
 
-const MODULE_ADDRESS = "0xd1835ab282925fcd14f520223ea9d213b70141ce7829a9ec6b8b777c5d6ca8ae"
+const MODULE_ADDRESS = "15c93e5da0b8dd0324b5128cc236c0965c57310f425921a193b771cda254fdfa"
 
 const aptos = getAptosClient()
 
@@ -28,6 +28,16 @@ export async function getValue(): Promise<number> {
   const [value] = await aptos.view<number[]>({
     payload: {
       function: `${MODULE_ADDRESS}::counter::get_value`,
+    }
+  })
+
+  return Number(value)
+}
+
+export async function getNextFibonacciValue(): Promise<number> {
+  const [value] = await aptos.view<number[]>({
+    payload: {
+      function: `${MODULE_ADDRESS}::counter::get_next_fibonacci_value`,
     }
   })
 

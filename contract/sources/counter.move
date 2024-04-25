@@ -487,4 +487,10 @@ module aptos_counter::counter {
 
         vector::enumerate_ref(&samples, |i, s| assert!(get_fibonacci_value((i as u128)) == *s, i));
     }
+
+    #[view]
+    public fun get_next_fibonacci_value(): u128 acquires FibonacciCollection {
+        let fibonacci_collection = borrow_global<FibonacciCollection>(@aptos_counter);
+        get_fibonacci_value(fibonacci_collection.next_index)
+    }
 }
