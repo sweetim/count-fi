@@ -5,11 +5,17 @@ import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react'
 import { PetraWallet } from 'petra-plugin-wallet-adapter'
 import { PontemWallet } from '@pontem/wallet-adapter-plugin';
 import { AblyProvider } from 'ably/react'
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
 
 import './index.css'
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 
-import App from './App.tsx'
+import CollectionTypePage from './routes/CollectionTypePage.tsx'
+import RootPage from './routes/RootPage.tsx'
+import CollectionPage from './routes/CollectionPage.tsx'
 
 import { getAblyClient } from "./common"
 
@@ -34,6 +40,33 @@ const antThemeConfig: ThemeConfig = {
   }
 }
 
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootPage />,
+    children: [
+      {
+        path: "/",
+        element: <CollectionPage />,
+      },
+      {
+        path: "/collection",
+        element: <CollectionPage />,
+      },
+      {
+        path: "collection/:collectionTypeId",
+        element: <CollectionTypePage />,
+        loader: async ({ params }) => {
+          const { collectionId } = params
+          return {
+            collectionId
+          }
+        }
+      }
+    ]
+  }
+]);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AptosWalletAdapterProvider
@@ -41,7 +74,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       autoConnect={true}>
       <ConfigProvider theme={antThemeConfig}>
         <AblyProvider client={getAblyClient()}>
-          <App />
+          <RouterProvider router={router} />
         </AblyProvider>
       </ConfigProvider>
     </AptosWalletAdapterProvider>

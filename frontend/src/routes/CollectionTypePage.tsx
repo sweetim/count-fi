@@ -1,16 +1,16 @@
-import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
-import { Col, Flex, Grid, Layout, Row } from 'antd'
+import { Col, Grid, Row } from 'antd'
 import { FC, useEffect, useState } from 'react'
-import { CounterRecord, CounterRecordEvent, getAllRecords, getValue } from './module/counter/contract';
-import { ActionCounter, RecordTimeline } from './module/counter/components';
-import CounterLogo from './icons/CounterLogo';
-import { ChannelProvider, useChannel } from 'ably/react';
-import { ABLY_APTOS_COUNTER_CHANNEL_NAME, getAptosClient } from './common';
+import { CounterRecord, CounterRecordEvent, getAllRecords, getValue } from '../module/count/contract';
+import { ActionCounter, RecordTimeline } from '../module/count/components';
+import { useChannel } from 'ably/react';
+import { ABLY_APTOS_COUNTER_CHANNEL_NAME, getAptosClient } from '../common';
+import { useLoaderData } from 'react-router-dom';
 
 const { useBreakpoint } = Grid;
-const { Content, Header } = Layout
 
-const CounterApp: FC = () => {
+const CollectionTypePage: FC = () => {
+  const { collectionTypeId } = useLoaderData() as { collectionTypeId: string }
+  console.log(collectionTypeId)
   const [value, setValue] = useState("...")
   const [allRecords, setAllRecords] = useState<CounterRecord[]>([])
 
@@ -97,29 +97,10 @@ const CounterApp: FC = () => {
   }
 
   return (
-    <Layout style={{ height: "100vh" }}>
-      <Header style={{ padding: "15px" }}>
-        <Flex style={{ height: "100%" }}
-          justify="space-between"
-          align="center">
-          <CounterLogo style={{ width: "32px", fill: "white " }} />
-          <WalletSelector />
-        </Flex>
-      </Header>
-      <Content style={{ display: "flex", flexDirection: "column" }}>
-        {screens.xs ? renderMobile() : renderDesktop()}
-      </Content>
-    </Layout>
+    <>
+    {screens.xs ? renderMobile() : renderDesktop()}
+    </>
   )
 }
 
-const App: FC = () => {
-  return (
-    <ChannelProvider channelName={ABLY_APTOS_COUNTER_CHANNEL_NAME}>
-      <CounterApp />
-      {/* <ParticlesDemo/> */}
-    </ChannelProvider >
-  )
-}
-
-export default App
+export default CollectionTypePage

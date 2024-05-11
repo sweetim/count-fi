@@ -20,6 +20,17 @@ export type CounterRecord = {
   user: string
 }
 
+export type CountCollectionItem = {
+  name: string,
+  description: string,
+  uri: string,
+  max_supply: number
+}
+
+export type CountCollection = {
+  items: CountCollectionItem[]
+}
+
 const MODULE_ADDRESS = "0x15c93e5da0b8dd0324b5128cc236c0965c57310f425921a193b771cda254fdfa"
 
 const aptos = getAptosClient()
@@ -32,6 +43,16 @@ export async function getValue(): Promise<number> {
   })
 
   return Number(value)
+}
+
+export async function getAllCollection(): Promise<CountCollectionItem[]> {
+  const [value] = await aptos.view<CountCollectionItem[][]>({
+    payload: {
+      function: `${MODULE_ADDRESS}::counter::get_all_collection`,
+    }
+  })
+
+  return value
 }
 
 export async function getNextFibonacciValue(): Promise<number> {

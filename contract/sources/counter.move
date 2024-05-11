@@ -1,6 +1,7 @@
 module aptos_counter::counter {
     use std::timestamp;
     use std::signer;
+    use std::string::String;
     use std::vector;
 
     use aptos_std::smart_vector;
@@ -53,6 +54,17 @@ module aptos_counter::counter {
         index: u128,
     }
 
+    struct CountCollection has key, store {
+        items: vector<CountCollectionItem>,
+    }
+
+    struct CountCollectionItem has key, store, copy {
+        name: String,
+        description: String,
+        uri: String,
+        max_supply: u64,
+    }
+
     fun init_module(owner: &signer) {
         move_to(owner, Counter {
             value: 0,
@@ -71,6 +83,35 @@ module aptos_counter::counter {
         init_module(&owner);
 
         assert!(get_value() == 0, 1);
+    }
+
+    public entry fun create_collection(owner: &signer) {
+        move_to(owner, CountCollection {
+            items: vector[]
+        })
+    }
+
+    public entry fun add_collection(
+        owner: &signer,
+        name: String,
+        description: String,
+        uri: String,
+        max_supply: u64) acquires CountCollection
+    {
+        let count_collection = borrow_global_mut<CountCollection>(@aptos_counter);
+
+        vector::push_back(&mut count_collection.items, CountCollectionItem {
+            name,
+            description,
+            uri,
+            max_supply
+        });
+    }
+
+    #[view]
+    public fun get_all_collection(): vector<CountCollectionItem> acquires CountCollection {
+        let count_collection = borrow_global_mut<CountCollection>(@aptos_counter);
+        count_collection.items
     }
 
     public entry fun increment(user: &signer) acquires Counter, FibonacciCollection {

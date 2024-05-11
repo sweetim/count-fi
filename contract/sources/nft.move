@@ -66,7 +66,7 @@ module aptos_counter::nft {
         let signer = &object::generate_signer_for_extending(extend_ref);
 
         let description = string_utils::format1(&b"fibonacci sequence number - {}", value);
-        let uri = string_utils::format1(&b"https://robohash.org/{}?set=set1", value);
+        let uri = string_utils::format1(&b"https://robohash.org/{}?set=set4", value);
         let minted_timestamp = timestamp::now_microseconds();
 
         let nft = aptos_token::mint_token_object(
