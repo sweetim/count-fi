@@ -4,13 +4,10 @@ import { CounterRecord, CounterRecordEvent, getAllRecords, getValue } from '../m
 import { ActionCounter, RecordTimeline } from '../module/count/components';
 import { useChannel } from 'ably/react';
 import { ABLY_APTOS_COUNTER_CHANNEL_NAME, getAptosClient } from '../common';
-import { useLoaderData } from 'react-router-dom';
 
 const { useBreakpoint } = Grid;
 
 const CollectionTypePage: FC = () => {
-  const { collectionTypeId } = useLoaderData() as { collectionTypeId: string }
-  console.log(collectionTypeId)
   const [value, setValue] = useState("...")
   const [allRecords, setAllRecords] = useState<CounterRecord[]>([])
 

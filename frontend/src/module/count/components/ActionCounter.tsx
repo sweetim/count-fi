@@ -5,6 +5,7 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react"
 
 import { decrementTransactionData, getNextFibonacciValue, incrementTransactionData, randomTransactionData } from "../contract"
 import { getAptosClient } from "@/common/aptosClient"
+import { useLoaderData } from "react-router-dom"
 
 const { Title, Text } = Typography
 
@@ -24,6 +25,7 @@ export type ActionCounterProps = {
 }
 
 const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
+  const { collectionTypeId } = useLoaderData() as { collectionTypeId: string }
   const { signAndSubmitTransaction, account } = useWallet()
 
   const [nextFibonacciValue, setNextFibonacciValue] = useState("...")
@@ -90,7 +92,7 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
         onClick={decrementClickHandler} />}
         <Text>
           <Badge style={{ background: "#fffb8f", marginRight: "5px" }} count={countLeftToMint} overflowCount={100000} />
-          count left to mint a fibonacci NFT</Text>
+          {`count left to mint a ${collectionTypeId.toLocaleLowerCase()} NFT`}</Text>
     </Flex>
   )
 }

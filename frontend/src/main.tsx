@@ -57,9 +57,9 @@ const router = createBrowserRouter([
         path: "collection/:collectionTypeId",
         element: <CollectionTypePage />,
         loader: async ({ params }) => {
-          const { collectionId } = params
+          const { collectionTypeId } = params
           return {
-            collectionId
+            collectionTypeId
           }
         }
       }

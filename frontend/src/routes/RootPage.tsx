@@ -3,7 +3,7 @@ import CounterLogo from "@/icons/CounterLogo"
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design"
 import { ChannelProvider } from "ably/react"
 import { Flex, Layout } from "antd"
-import { Outlet } from "react-router-dom"
+import { Link, Outlet } from "react-router-dom"
 
 const { Content, Header } = Layout
 
@@ -14,7 +14,9 @@ export default function RootPage() {
         <Flex style={{ height: "100%" }}
           justify="space-between"
           align="center">
-          <CounterLogo style={{ width: "32px", fill: "white " }} />
+          <Link to={"/"}>
+            <CounterLogo style={{ width: "32px", fill: "white " }} />
+          </Link>
           <WalletSelector />
         </Flex>
       </Header>
