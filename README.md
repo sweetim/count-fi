@@ -1,4 +1,4 @@
-## Aptos Count Dapp
+## CountFI
 
 a gameFI that allows user to mint a unique NFT based on certain mathematical properties
 
