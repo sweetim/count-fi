@@ -81,12 +81,12 @@ const CollectionTypePage: FC = () => {
   const renderDesktop = () => {
     return (
       <Row
-        style={{ height: "100%" }}>
+        className="h-full">
         <Col sm={{ flex: "auto" }}>
           <ActionCounter value={value} />
         </Col>
         {allRecords.length > 0 && <Col span={16}
-          style={{ overflow: "auto", padding: "20px", height: "100%" }}>
+          className="overflow-auto p-5 h-full">
           <RecordTimeline records={allRecords} />
         </Col>}
       </Row>
@@ -95,7 +95,7 @@ const CollectionTypePage: FC = () => {
 
   return (
     <>
-    {screens.xs ? renderMobile() : renderDesktop()}
+      {screens.xs ? renderMobile() : renderDesktop()}
     </>
   )
 }

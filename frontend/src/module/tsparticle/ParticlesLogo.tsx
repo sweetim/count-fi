@@ -120,8 +120,8 @@ const options: ISourceOptions = {
       radius: 10,
     },
     position: {
-      x: 33,
-      y: 0,
+      x: 30,
+      y: 20,
     },
     inline: {
       arrangement: "equidistant",
@@ -156,7 +156,6 @@ const ParticlesLogo = () => {
   }, [])
 
   return (
-    // <div id="tsparticles"></div>
     <div className="h-full" id="tsparticles">
     </div>
   )

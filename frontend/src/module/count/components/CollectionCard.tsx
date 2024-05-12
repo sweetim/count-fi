@@ -13,7 +13,7 @@ const CollectionCard: FC<CountCollectionItem> = (props) => {
       extra={<Badge count={props.max_supply} color="#fffb8f" overflowCount={1000000} />}
       cover={
         <img
-          className="max-h-32 min-h-32"
+          className="max-h-32 min-h-32 !rounded-none"
           alt={props.description}
           src={props.uri} />
       }

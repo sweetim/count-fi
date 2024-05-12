@@ -9,22 +9,22 @@ const { Content, Header } = Layout
 
 export default function RootPage() {
   return (
-    <Layout style={{ height: "100vh" }}>
-      <Header style={{ padding: "15px" }}>
-        <Flex style={{ height: "100%" }}
+    <Layout className="h-screen">
+      <Header className="p-5">
+        <Flex className="h-full"
           justify="space-between"
           align="center">
           <Link to={"/"}>
-            <CounterLogo style={{ width: "32px", fill: "white " }} />
+            <CounterLogo className="w-8 fill-white" />
           </Link>
           <WalletSelector />
         </Flex>
       </Header>
-      <Content style={{ display: "flex", flexDirection: "column" }}>
-        <ChannelProvider channelName={ABLY_APTOS_COUNTER_CHANNEL_NAME}>
-          <Outlet />
-        </ChannelProvider >
-      </Content>
+        <Content>
+          <ChannelProvider channelName={ABLY_APTOS_COUNTER_CHANNEL_NAME}>
+            <Outlet />
+          </ChannelProvider >
+        </Content>
     </Layout>
   )
 }
