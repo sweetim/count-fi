@@ -1,7 +1,6 @@
 import CollectionGrid from "@/module/count/components/CollectionGrid";
 import { CountCollectionItem, getAllCollection } from "@/module/count/contract";
 import ParticlesLogo from "@/module/tsparticle/ParticlesLogo";
-import { Flex } from "antd";
 import { useEffect, useState } from "react";
 
 export default function CollectionPage() {
