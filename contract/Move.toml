@@ -1,14 +1,14 @@
 [package]
-name = "aptos-counter"
+name = "aptos-count"
 version = "1.0.0"
 authors = []
 
 [addresses]
-aptos_counter = "15c93e5da0b8dd0324b5128cc236c0965c57310f425921a193b771cda254fdfa"
-#aptos_counter = "_"
+aptos_count = "15c93e5da0b8dd0324b5128cc236c0965c57310f425921a193b771cda254fdfa"
+#aptos_count = "_"
 
 [dev-addresses]
-#aptos_counter = "0xd0b18be81b732b64edaf62b54ad1a5aab1bbe37cb2370d5b7c06042ca55d9e0b"
+#aptos_count = "0xd0b18be81b732b64edaf62b54ad1a5aab1bbe37cb2370d5b7c06042ca55d9e0b"
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-core.git"

@@ -1,12 +1,13 @@
-module aptos_counter::nft {
+module aptos_count::nft {
     use std::signer;
     use std::string;
     use aptos_std::string_utils;
     use aptos_framework::event;
     use aptos_framework::object;
-    use aptos_framework::object::ExtendRef;
+    use aptos_framework::object::{ExtendRef, Object};
     use aptos_framework::timestamp;
     use aptos_token_objects::aptos_token;
+    use aptos_token_objects::aptos_token::AptosToken;
     #[test_only]
     use std::vector;
     #[test_only]
@@ -14,14 +15,14 @@ module aptos_counter::nft {
     #[test_only]
     use aptos_framework::event::emitted_events;
 
-    friend aptos_counter::counter;
+    friend aptos_count::count;
 
     struct NftCollectionCreator has key {
         extend_ref: ExtendRef
     }
 
     #[event]
-    struct CounterNftMintEvent has key, store, drop, copy {
+    struct CountNftMintEvent has key, store, drop, copy {
         timestamp_us: u64,
         user: address,
         value: u128,
@@ -61,8 +62,8 @@ module aptos_counter::nft {
         );
     }
 
-    public(friend) fun mint(to_user: address, value: u128) acquires NftCollectionCreator {
-        let extend_ref = &borrow_global<NftCollectionCreator>(@aptos_counter).extend_ref;
+    public(friend) fun mint(to_user: address, value: u128): Object<AptosToken> acquires NftCollectionCreator {
+        let extend_ref = &borrow_global<NftCollectionCreator>(@aptos_count).extend_ref;
         let signer = &object::generate_signer_for_extending(extend_ref);
 
         let description = string_utils::format1(&b"fibonacci sequence number - {}", value);
@@ -85,12 +86,14 @@ module aptos_counter::nft {
 
         object::transfer(signer, nft, to_user);
 
-        event::emit(CounterNftMintEvent {
+        event::emit(CountNftMintEvent {
             value,
             user: to_user,
             timestamp_us: minted_timestamp,
             nft_address: object::object_address(&nft)
-        })
+        });
+
+        nft
     }
 
     #[test_only]
@@ -102,14 +105,14 @@ module aptos_counter::nft {
     public fun test_nft_mint(framework: &signer, user_1: &signer) acquires NftCollectionCreator {
         timestamp::set_time_has_started_for_testing(framework);
 
-        let owner = &account::create_account_for_test(@aptos_counter);
+        let owner = &account::create_account_for_test(@aptos_count);
         let user_1_address= signer::address_of(user_1);
         account::create_account_for_test(user_1_address);
 
         init_module(owner);
         mint(user_1_address, 123);
 
-        let all_emitted_events = &emitted_events<CounterNftMintEvent>();
+        let all_emitted_events = &emitted_events<CountNftMintEvent>();
         assert!(vector::length(all_emitted_events) == 1, 2);
     }
 }

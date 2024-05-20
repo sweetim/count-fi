@@ -1,4 +1,4 @@
-module aptos_counter::ft {
+module aptos_count::ft {
     use std::object;
     use std::option;
     use std::string;
@@ -12,7 +12,7 @@ module aptos_counter::ft {
     #[test_only]
     use aptos_framework::account;
 
-    friend aptos_counter::counter;
+    friend aptos_count::count;
 
     const ASSETS_SYMBOL: vector<u8> = b"CNT";
     const ASSETS_NAME: vector<u8> = b"COUNT";
@@ -59,7 +59,7 @@ module aptos_counter::ft {
 
     #[view]
     public fun get_ft_address(): address {
-        object::create_object_address(&@aptos_counter, ASSETS_SYMBOL)
+        object::create_object_address(&@aptos_count, ASSETS_SYMBOL)
     }
 
     #[view]
@@ -75,7 +75,7 @@ module aptos_counter::ft {
 
     #[test(user_1 = @0x123)]
     public fun test_get_balance(user_1: &signer) acquires ManagedFT {
-        let owner = &account::create_account_for_test(@aptos_counter);
+        let owner = &account::create_account_for_test(@aptos_count);
         account::create_account_for_test(signer::address_of(user_1));
         let user_1_address = signer::address_of(user_1);
 
