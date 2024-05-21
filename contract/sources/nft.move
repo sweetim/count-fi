@@ -1,7 +1,7 @@
 module aptos_count::nft {
     use std::signer;
     use std::string;
-    use aptos_std::string_utils;
+    use std::string::String;
     use aptos_framework::event;
     use aptos_framework::object;
     use aptos_framework::object::{ExtendRef, Object};
@@ -14,8 +14,10 @@ module aptos_count::nft {
     use aptos_framework::account;
     #[test_only]
     use aptos_framework::event::emitted_events;
+    #[test_only]
+    use aptos_token_objects::property_map;
 
-    friend aptos_count::count;
+    friend aptos_count::fibonacci;
 
     struct NftCollectionCreator has key {
         extend_ref: ExtendRef
@@ -29,8 +31,6 @@ module aptos_count::nft {
         nft_address: address,
     }
 
-    const COLLECTION_NAME: vector<u8> = b"COUNT - Fibonacci";
-
     fun init_module(owner: &signer) {
         let owner_address = signer::address_of(owner);
         let owner_constructor_ref = &object::create_object(owner_address);
@@ -39,15 +39,23 @@ module aptos_count::nft {
         move_to(owner, NftCollectionCreator {
             extend_ref: owner_extend_ref
         });
+    }
 
-        let owner_signer = &object::generate_signer(owner_constructor_ref);
+    public(friend) fun create_collection(
+        collection_name: String,
+        description: String,
+        max_supply: u64,
+        uri: String
+    ) acquires NftCollectionCreator {
+        let extend_ref = &borrow_global<NftCollectionCreator>(@aptos_count).extend_ref;
+        let signer = &object::generate_signer_for_extending(extend_ref);
 
         aptos_token::create_collection(
-            owner_signer,
-            string::utf8(b"a collection count NFT minted using fibonacci sequence"),
-            185,
-            string::utf8(COLLECTION_NAME),
-            string::utf8(b"https://count.timx.co/fibonacci.svg"),
+            signer,
+            description,
+            max_supply,
+            collection_name,
+            uri,
             true,
             true,
             true,
@@ -62,19 +70,24 @@ module aptos_count::nft {
         );
     }
 
-    public(friend) fun mint(to_user: address, value: u128): Object<AptosToken> acquires NftCollectionCreator {
+    public(friend) fun mint(
+        to_user: address,
+        collection_name: String,
+        description: String,
+        uri: String,
+        nft_name: String,
+        value: u128,
+        sequence_index: u128): Object<AptosToken> acquires NftCollectionCreator {
         let extend_ref = &borrow_global<NftCollectionCreator>(@aptos_count).extend_ref;
         let signer = &object::generate_signer_for_extending(extend_ref);
 
-        let description = string_utils::format1(&b"fibonacci sequence number - {}", value);
-        let uri = string_utils::format1(&b"https://robohash.org/{}?set=set4", value);
         let minted_timestamp = timestamp::now_microseconds();
 
         let nft = aptos_token::mint_token_object(
             signer,
-            string::utf8(COLLECTION_NAME),
+            collection_name,
             description,
-            string_utils::format1(&b"Fibonacci - {}", value),
+            nft_name,
             uri,
             vector[],
             vector[],
@@ -83,6 +96,7 @@ module aptos_count::nft {
 
         aptos_token::add_typed_property(signer, nft, string::utf8(b"Value"), value);
         aptos_token::add_typed_property(signer, nft, string::utf8(b"Minted at"), minted_timestamp);
+        aptos_token::add_typed_property(signer, nft, string::utf8(b"Sequence number"), sequence_index);
 
         object::transfer(signer, nft, to_user);
 
@@ -101,19 +115,103 @@ module aptos_count::nft {
         init_module(owner);
     }
 
-    #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_nft_mint(framework: &signer, user_1: &signer) acquires NftCollectionCreator {
+    #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
+    public fun test_nft_mint(framework: &signer, user_1: &signer, user_2: &signer) acquires NftCollectionCreator {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
         let user_1_address= signer::address_of(user_1);
+        let user_2_address= signer::address_of(user_2);
         account::create_account_for_test(user_1_address);
+        account::create_account_for_test(user_2_address);
+
+        let collection_name = string::utf8(b"collection");
 
         init_module(owner);
-        mint(user_1_address, 123);
+        create_collection(
+            collection_name,
+            string::utf8(b"description"),
+            100,
+            string::utf8(b"uri"),
+        );
+
+        let nft_object = mint(
+            user_1_address,
+            collection_name,
+            string::utf8(b"description"),
+            string::utf8(b"uri"),
+            string::utf8(b"nft name"),
+            100,
+            1
+        );
+
+        assert!(property_map::read_u128(&nft_object, &string::utf8(b"Value")) == 100, 1);
+        assert!(object::is_owner(nft_object, user_1_address), 1);
+        assert!(object::is_owner(nft_object, user_2_address) == false, 1);
 
         let all_emitted_events = &emitted_events<CountNftMintEvent>();
         assert!(vector::length(all_emitted_events) == 1, 2);
+    }
+
+    #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
+    public fun test_nft_mint_multi_collection(framework: &signer, user_1: &signer, user_2: &signer) acquires NftCollectionCreator {
+        timestamp::set_time_has_started_for_testing(framework);
+
+        let owner = &account::create_account_for_test(@aptos_count);
+        let user_1_address= signer::address_of(user_1);
+        let user_2_address= signer::address_of(user_2);
+        account::create_account_for_test(user_1_address);
+        account::create_account_for_test(user_2_address);
+
+        let collection_name_1 = string::utf8(b"collection_1");
+        let collection_name_2 = string::utf8(b"collection_2");
+
+        init_module(owner);
+
+        create_collection(
+            collection_name_1,
+            string::utf8(b"description"),
+            100,
+            string::utf8(b"uri"),
+        );
+
+        create_collection(
+            collection_name_2,
+            string::utf8(b"description"),
+            100,
+            string::utf8(b"uri"),
+        );
+
+        let nft_object = mint(
+            user_1_address,
+            collection_name_1,
+            string::utf8(b"description"),
+            string::utf8(b"uri"),
+            string::utf8(b"nft name"),
+            100,
+            1
+        );
+
+        assert!(property_map::read_u128(&nft_object, &string::utf8(b"Value")) == 100, 1);
+        assert!(object::is_owner(nft_object, user_1_address), 1);
+        assert!(object::is_owner(nft_object, user_2_address) == false, 1);
+
+        let nft_object = mint(
+            user_2_address,
+            collection_name_2,
+            string::utf8(b"description 2"),
+            string::utf8(b"uri 2"),
+            string::utf8(b"nft name 2"),
+            321,
+            1
+        );
+
+        assert!(property_map::read_u128(&nft_object, &string::utf8(b"Value")) == 321, 2);
+        assert!(object::is_owner(nft_object, user_1_address) == false, 2);
+        assert!(object::is_owner(nft_object, user_2_address), 2);
+
+        let all_emitted_events = &emitted_events<CountNftMintEvent>();
+        assert!(vector::length(all_emitted_events) == 2, 2);
     }
 }
 

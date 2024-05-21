@@ -1,21 +1,26 @@
 module aptos_count::fibonacci {
-    use std::signer;
     use std::string;
     use std::string::String;
     use aptos_std::smart_vector;
     use aptos_std::smart_vector::SmartVector;
+    use aptos_std::string_utils;
+    #[test_only]
+    use std::signer;
     #[test_only]
     use std::vector;
     #[test_only]
     use aptos_framework::account;
     #[test_only]
+    use aptos_framework::timestamp;
+    #[test_only]
     use aptos_count::utils::iterate_with_index;
 
     friend aptos_count::count;
 
-    const TITLE: vector<u8> = b"Fibonacci";
+    const COLLECTION_NAME: vector<u8> = b"COUNT - Fibonacci";
     const DESCRIPTION: vector<u8>  = b"series of numbers where each number is the sum of the two preceding numbers";
     const IMAGE_URI: vector<u8>  = b"https://improveyourmathfluency.com/wp-content/uploads/2015/07/fibonacci.jpg";
+    const MAX_SUPPLY: u64 = 186;
 
     struct CollectorOwner has key, store {
         timestamp_us: u64,
@@ -24,7 +29,7 @@ module aptos_count::fibonacci {
         index: u128,
     }
 
-    struct FibonacciCollectionMetadata has key, store {
+    struct FibonacciCollectionMetadata has key, store, drop {
         title: String,
         description: String,
         uri: String,
@@ -40,7 +45,15 @@ module aptos_count::fibonacci {
         move_to(owner, FibonacciCollection {
             next_index: 0,
             owners: smart_vector::new<CollectorOwner>()
-        })
+        });
+
+        let collection_description = get_collection_description();
+        aptos_count::nft::create_collection(
+            collection_description.title,
+            collection_description.description,
+            collection_description.max_supply,
+            collection_description.uri
+        );
     }
 
     public(friend) fun validate_and_mint(user: address, value: u128, timestamp_us: u64): bool acquires FibonacciCollection {
@@ -59,6 +72,19 @@ module aptos_count::fibonacci {
             });
 
             collection.next_index = collection.next_index + 1;
+
+            let nft_name = string_utils::format1(&b"Fibonacci - {}", value);
+            let description = string_utils::format1(&b"Sequence number - {}", next_index);
+            let uri = string_utils::format1(&b"https://robohash.org/{}?set=set3", value);
+
+            aptos_count::nft::mint(
+                user,
+                get_collection_description().title,
+                description,
+                uri,
+                nft_name,
+                value,
+                next_index);
         };
 
         is_next_value
@@ -67,10 +93,10 @@ module aptos_count::fibonacci {
     #[view]
     public fun get_collection_description(): FibonacciCollectionMetadata {
         return FibonacciCollectionMetadata {
-            title: string::utf8(TITLE),
+            title: string::utf8(COLLECTION_NAME),
             description: string::utf8(DESCRIPTION),
             uri: string::utf8(IMAGE_URI),
-            max_supply: 186,
+            max_supply: MAX_SUPPLY,
         }
     }
 
@@ -133,10 +159,13 @@ module aptos_count::fibonacci {
             |i, s| assert!(get_value((i as u128)) == *s, i));
     }
 
-    #[test]
-    public fun test_get_next_value() acquires FibonacciCollection {
+    #[test(framework = @0x1)]
+    public fun test_get_next_value(framework: &signer) acquires FibonacciCollection {
+        timestamp::set_time_has_started_for_testing(framework);
+
         let owner = &account::create_account_for_test(@aptos_count);
 
+        aptos_count::nft::init_module_for_testing(owner);
         init_module(owner);
 
         let expected = vector[
@@ -158,14 +187,18 @@ module aptos_count::fibonacci {
         });
     }
 
-    #[test(user_1 = @0x123)]
-    public fun test_validate_and_mint_with_fibonacci_sequence(user_1: &signer) acquires FibonacciCollection {
+    #[test(framework = @0x1, user_1 = @0x123)]
+    public fun test_validate_and_mint_with_fibonacci_sequence(framework: &signer, user_1: &signer) acquires FibonacciCollection {
+        timestamp::set_time_has_started_for_testing(framework);
+
         let owner = &account::create_account_for_test(@aptos_count);
 
         let user_1_address = signer::address_of(user_1);
         account::create_account_for_test(user_1_address);
 
+        aptos_count::nft::init_module_for_testing(owner);
         init_module(owner);
+
         assert!(get_next_index() == 0, 1);
 
         let is_success_expected = vector[

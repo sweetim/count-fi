@@ -15,6 +15,8 @@ module aptos_count::count {
     use aptos_framework::account;
     #[test_only]
     use aptos_framework::event::emitted_events;
+    #[test_only]
+    use aptos_count::fibonacci;
 
     const COUNT_ACTION_INCREMENT: u8 = 1;
     const COUNT_ACTION_DECREMENT: u8 = 2;
@@ -140,6 +142,25 @@ module aptos_count::count {
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
+    public fun test_perform_action_fibonacci(framework: &signer, user_1: &signer) acquires CountCollection {
+        timestamp::set_time_has_started_for_testing(framework);
+
+        let owner = &account::create_account_for_test(@aptos_count);
+        account::create_account_for_test(signer::address_of(user_1));
+
+        init_module(owner);
+        aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
+        aptos_count::fibonacci::init_module_for_testing(owner);
+
+        assert!(fibonacci::get_next_value() == 0, 1);
+        perform_action(user_1, COLLECTION_FIBONACCI_ID, COUNT_ACTION_DECREMENT);
+        assert!(fibonacci::get_next_value() == 1, 2);
+        perform_action(user_1, COLLECTION_FIBONACCI_ID, COUNT_ACTION_INCREMENT);
+        assert!(fibonacci::get_next_value() == 1, 3);
+    }
+
+    #[test(framework = @0x1, user_1 = @0x123)]
     #[expected_failure(abort_code = E_WRONG_COLLECTION_ID, location = Self)]
     public fun test_perform_action_wrong_collection_id(framework: &signer, user_1: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
@@ -149,6 +170,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         perform_action(user_1, 5, COUNT_ACTION_INCREMENT);
@@ -165,6 +187,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         let balance_user_1 = aptos_count::ft::get_balance(signer::address_of(user_1));
@@ -193,6 +216,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         increment(user_1, COLLECTION_FIBONACCI_ID);
@@ -219,6 +243,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         increment(user_1, COLLECTION_FIBONACCI_ID);
@@ -263,6 +288,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         change_value(user_1, COLLECTION_FIBONACCI_ID, 1000);
@@ -282,6 +308,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         assert!(get_value(COLLECTION_FIBONACCI_ID) == 0, 0);
@@ -325,6 +352,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         decrement(user_1, COLLECTION_FIBONACCI_ID);
@@ -375,6 +403,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
@@ -445,16 +474,32 @@ module aptos_count::count {
 
     #[view]
     public fun get_value(collection_id: u32): u128 acquires CountCollection {
+        assert!(collection_id < COLLECTION_TYPE_COUNT, E_WRONG_COLLECTION_ID);
+
         let collection = borrow_global<CountCollection>(@aptos_count);
         table::borrow(&collection.items, collection_id).value
     }
 
+    #[test]
+    #[expected_failure(abort_code = E_WRONG_COLLECTION_ID, location = Self)]
+    public fun test_get_value_collection_id_out_of_bound() acquires CountCollection {
+        get_value(COLLECTION_TYPE_COUNT + 1);
+    }
+
     #[view]
     public fun get_records_length(collection_id: u32): u64 acquires CountCollection {
+        assert!(collection_id < COLLECTION_TYPE_COUNT, E_WRONG_COLLECTION_ID);
+
         let collection = borrow_global<CountCollection>(@aptos_count);
 
         smart_vector::length(
             &table::borrow(&collection.items, collection_id).records)
+    }
+
+    #[test]
+    #[expected_failure(abort_code = E_WRONG_COLLECTION_ID, location = Self)]
+    public fun test_get_records_length_collection_id_out_of_bound() acquires CountCollection {
+        get_records_length(COLLECTION_TYPE_COUNT + 1);
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
@@ -467,6 +512,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         increment(user_1, COLLECTION_FIBONACCI_ID);
@@ -478,11 +524,19 @@ module aptos_count::count {
 
     #[view]
     public fun query_all_records(collection_id: u32): vector<CountRecord> acquires CountCollection {
+        assert!(collection_id < COLLECTION_TYPE_COUNT, E_WRONG_COLLECTION_ID);
+
         let collection = borrow_global<CountCollection>(@aptos_count);
         let count = table::borrow(&collection.items, collection_id);
         let all_records = smart_vector::to_vector(&count.records);
         vector::reverse(&mut all_records);
         all_records
+    }
+
+    #[test]
+    #[expected_failure(abort_code = E_WRONG_COLLECTION_ID, location = Self)]
+    public fun test_query_all_records_collection_id_out_of_bound() acquires CountCollection {
+        query_all_records(COLLECTION_TYPE_COUNT + 1);
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
@@ -495,6 +549,7 @@ module aptos_count::count {
 
         init_module(owner);
         aptos_count::ft::init_module_for_testing(owner);
+        aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
 
         timestamp::fast_forward_seconds(1);

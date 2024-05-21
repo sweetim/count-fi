@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-aptos_count = "15c93e5da0b8dd0324b5128cc236c0965c57310f425921a193b771cda254fdfa"
+aptos_count = "0xf74325402ca881cd4ba87f2c1183aaa32a7649ab1c81c9cfa42ad1048db5ed36"
 #aptos_count = "_"
 
 [dev-addresses]
