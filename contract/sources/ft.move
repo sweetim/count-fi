@@ -16,6 +16,8 @@ module aptos_count::ft {
 
     const ASSETS_SYMBOL: vector<u8> = b"CNT";
     const ASSETS_NAME: vector<u8> = b"COUNT";
+    const ICON_URI: vector<u8> = b"https://count.timx.co/count.svg";
+    const PROJECT_URI: vector<u8> = b"https://count.timx.co";
     const MAX_SUPPLY: u128 = 1_000_000;
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
@@ -34,8 +36,8 @@ module aptos_count::ft {
             string::utf8(ASSETS_NAME),
             string::utf8(ASSETS_SYMBOL),
             0,
-            string::utf8(b"https://count.timx.co/count.svg"),
-            string::utf8(b"https://count.timx.co")
+            string::utf8(ICON_URI),
+            string::utf8(PROJECT_URI)
         );
 
         let mint_ref = fungible_asset::generate_mint_ref(construct_ref);
@@ -71,6 +73,11 @@ module aptos_count::ft {
     public fun get_balance(user: address): u64 {
         let store = primary_fungible_store::ensure_primary_store_exists(user, get_ft_metadata());
         fungible_asset::balance(store)
+    }
+
+    #[test_only]
+    public fun init_module_for_testing(owner: &signer) {
+        init_module(owner);
     }
 
     #[test(user_1 = @0x123)]

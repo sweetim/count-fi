@@ -43,7 +43,7 @@ module aptos_count::fibonacci {
         })
     }
 
-    public(friend) fun count(user: &signer, value: u128, timestamp_us: u64): bool acquires FibonacciCollection {
+    public(friend) fun validate_and_mint(user: address, value: u128, timestamp_us: u64): bool acquires FibonacciCollection {
         let next_index  = get_next_index();
         let next_value = get_next_value();
         let is_next_value = next_value == value;
@@ -53,7 +53,7 @@ module aptos_count::fibonacci {
 
             smart_vector::push_back(&mut collection.owners, CollectorOwner {
                 timestamp_us,
-                user: signer::address_of(user),
+                user,
                 value,
                 index: next_index
             });
@@ -99,6 +99,11 @@ module aptos_count::fibonacci {
         };
 
         b
+    }
+
+    #[test_only]
+    public fun init_module_for_testing(owner: &signer) {
+        init_module(owner);
     }
 
     #[test_only]
@@ -154,10 +159,11 @@ module aptos_count::fibonacci {
     }
 
     #[test(user_1 = @0x123)]
-    public fun test_count_with_fibonacci_sequence(user_1: &signer) acquires FibonacciCollection {
+    public fun test_validate_and_mint_with_fibonacci_sequence(user_1: &signer) acquires FibonacciCollection {
         let owner = &account::create_account_for_test(@aptos_count);
 
-        account::create_account_for_test(signer::address_of(user_1));
+        let user_1_address = signer::address_of(user_1);
+        account::create_account_for_test(user_1_address);
 
         init_module(owner);
         assert!(get_next_index() == 0, 1);
@@ -189,7 +195,7 @@ module aptos_count::fibonacci {
         ];
 
         vector::zip(input_value, is_success_expected, |input, expected| {
-            let actual = count(user_1, input, 0);
+            let actual = validate_and_mint(user_1_address, input, 0);
             assert!(actual == expected, 1);
         });
     }
