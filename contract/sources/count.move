@@ -5,6 +5,8 @@ module aptos_count::count {
 
     use aptos_std::smart_vector;
     use aptos_std::smart_vector::SmartVector;
+    use aptos_std::table;
+    use aptos_std::table::Table;
     use aptos_framework::event;
 
     // use aptos_framework::randomness;
@@ -20,14 +22,15 @@ module aptos_count::count {
     const COUNT_ACTION_DECREMENT: u8 = 2;
     const COUNT_ACTION_RANDOM: u8 = 3;
 
-    const E_NOT_OWNER: u64 = 1;
-
     const COLLECTION_FIBONACCI_ID: u32 = 0;
     const COLLECTION_PRIME_NUMBER_ID: u32 = 1;
     const COLLECTION_LINEAR_ID: u32 = 2;
+    const COLLECTION_TYPE_COUNT: u32 = 3;
+
+    const E_NOT_OWNER: u64 = 1;
 
     struct CountCollection has key {
-        items: vector<Count>
+        items: Table<u32, Count>
     }
 
     struct Count has key, store {
@@ -50,32 +53,43 @@ module aptos_count::count {
     }
 
     fun init_module(owner: &signer) {
-        move_to(owner, Count {
+        let count_collection = CountCollection {
+            items: table::new()
+        };
+
+        table::add(
+            &mut count_collection.items, COLLECTION_FIBONACCI_ID, Count {
+                value: 0,
+                records: smart_vector::new()
+            });
+
+        table::add(
+            &mut count_collection.items, COLLECTION_PRIME_NUMBER_ID, Count {
             value: 0,
             records: smart_vector::new()
         });
 
-        move_to(owner, CountCollection {
-            items: vector[
+        table::add(
+            &mut count_collection.items, COLLECTION_LINEAR_ID, Count {
+            value: 0,
+            records: smart_vector::new()
+        });
 
-            ]
-        })
-    }
-
-    fun register_collection(id: u32) {
-
+        move_to(owner, count_collection);
     }
 
     #[test]
-    public fun test_init() acquires Count {
+    public fun test_init() acquires CountCollection {
         let owner = account::create_account_for_test(@aptos_count);
         init_module(&owner);
 
-        assert!(get_value() == 0, 1);
+        for (id in 0..COLLECTION_TYPE_COUNT) {
+            assert!(get_value(id) == 0, 1);
+        };
     }
 
-    public entry fun increment(user: &signer) acquires Count {
-        perform_action(user, COUNT_ACTION_INCREMENT);
+    public entry fun increment(user: &signer, collection_id: u32) acquires CountCollection {
+        perform_action(user, collection_id, COUNT_ACTION_INCREMENT);
     }
 
     inline fun get_random_action(): u8 {
@@ -87,7 +101,10 @@ module aptos_count::count {
         if (is_even) COUNT_ACTION_INCREMENT else COUNT_ACTION_DECREMENT
     }
 
-    fun perform_action(user: &signer, action: u8) acquires Count {
+    fun perform_action(user: &signer, collection_id: u32, action: u8) acquires CountCollection {
+        let collection = borrow_global_mut<CountCollection>(@aptos_count);
+
+        let count = table::borrow_mut(&mut collection.items, collection_id);
         let current_timestamp_us = timestamp::now_microseconds();
         let user_address = signer::address_of(user);
         let count_record = CountRecord {
@@ -98,7 +115,6 @@ module aptos_count::count {
 
         let action = if (action == COUNT_ACTION_RANDOM) get_random_action() else action;
 
-        let count = borrow_global_mut<Count>(@aptos_count);
         update_value_from_action(&mut count.value, action);
         smart_vector::push_back(&mut count.records, count_record);
 
@@ -117,7 +133,7 @@ module aptos_count::count {
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
-    public fun test_increment(framework: &signer, user_1: &signer, user_2: &signer) acquires Count {
+    public fun test_increment_single_collection(framework: &signer, user_1: &signer, user_2: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -128,35 +144,67 @@ module aptos_count::count {
         init_module(owner);
         init_module_for_testing(owner);
 
-        increment(user_1);
-        assert!(get_value() == 1, 1);
+        increment(user_1, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 1, 1);
 
-        increment(user_2);
-        assert!(get_value() == 2, 2);
+        increment(user_2, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 2, 2);
 
-        increment(user_1);
-        assert!(get_value() == 3, 2);
+        increment(user_1, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 3, 2);
 
         let event_length = vector::length(&emitted_events<CountRecordEvent>());
         assert!(event_length == 3, 3);
     }
-// 0, 1, 1, 2
-    public entry fun decrement(user: &signer) acquires Count {
-        perform_action(user, COUNT_ACTION_DECREMENT);
+
+    #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
+    public fun test_increment_multi_collection(framework: &signer, user_1: &signer, user_2: &signer) acquires CountCollection {
+        timestamp::set_time_has_started_for_testing(framework);
+
+        let owner = &account::create_account_for_test(@aptos_count);
+
+        account::create_account_for_test(signer::address_of(user_1));
+        account::create_account_for_test(signer::address_of(user_2));
+
+        init_module(owner);
+        init_module_for_testing(owner);
+
+        increment(user_1, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 1, 1);
+        assert!(get_value(COLLECTION_PRIME_NUMBER_ID) == 0, 2);
+        assert!(get_value(COLLECTION_LINEAR_ID) == 0, 3);
+
+        increment(user_2, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 2, 4);
+        assert!(get_value(COLLECTION_PRIME_NUMBER_ID) == 0, 5);
+        assert!(get_value(COLLECTION_LINEAR_ID) == 0, 6);
+
+        increment(user_1, COLLECTION_PRIME_NUMBER_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 2, 7);
+        assert!(get_value(COLLECTION_PRIME_NUMBER_ID) == 1, 8);
+        assert!(get_value(COLLECTION_LINEAR_ID) == 0, 9);
+
+        let event_length = vector::length(&emitted_events<CountRecordEvent>());
+        assert!(event_length == 3, 3);
     }
 
-    fun change_value(signer: &signer, value: u128) acquires Count {
+    public entry fun decrement(user: &signer, collection_id: u32) acquires CountCollection {
+        perform_action(user, collection_id, COUNT_ACTION_DECREMENT);
+    }
+
+    #[test_only]
+    fun change_value(signer: &signer, collection_id: u32, value: u128) acquires CountCollection {
         let user_address = signer::address_of(signer);
+        assert!(exists<CountCollection>(user_address), E_NOT_OWNER);
 
-        assert!(exists<Count>(user_address), E_NOT_OWNER);
-
-        let counter = borrow_global_mut<Count>(user_address);
+        let collection = borrow_global_mut<CountCollection>(@aptos_count);
+        let counter = table::borrow_mut(&mut collection.items, collection_id);
         counter.value = value;
     }
 
     #[test(user_1 = @0x123)]
     #[expected_failure]
-    public fun test_change_value(user_1: &signer) acquires Count {
+    public fun test_change_value(user_1: &signer) acquires CountCollection {
         let owner = &account::create_account_for_test(@aptos_count);
 
         account::create_account_for_test(signer::address_of(user_1));
@@ -164,11 +212,14 @@ module aptos_count::count {
         init_module(owner);
         init_module_for_testing(owner);
 
-        change_value(user_1, 1000);
+        change_value(user_1, COLLECTION_FIBONACCI_ID, 1000);
+        assert!(1000 == get_value(COLLECTION_FIBONACCI_ID), 1);
+        assert!(0 == get_value(COLLECTION_LINEAR_ID), 2);
+        assert!(0 == get_value(COLLECTION_PRIME_NUMBER_ID), 3);
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
-    public fun test_decrement(framework: &signer, user_1: &signer, user_2: &signer) acquires Count {
+    public fun test_decrement_collection(framework: &signer, user_1: &signer, user_2: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -179,28 +230,39 @@ module aptos_count::count {
         init_module(owner);
         init_module_for_testing(owner);
 
-        assert!(get_value() == 0, 1);
-        change_value(owner, 1000);
-        assert!(get_value() == 1000, 1);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 0, 0);
+        change_value(owner, COLLECTION_FIBONACCI_ID, 1000);
 
-        decrement(user_1);
-        assert!(get_value() == 999, 1);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 1000, 1);
+        assert!(0 == get_value(COLLECTION_LINEAR_ID), 2);
+        assert!(0 == get_value(COLLECTION_PRIME_NUMBER_ID), 3);
 
-        decrement(user_1);
-        assert!(get_value() == 998, 1);
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 999, 1);
+        assert!(0 == get_value(COLLECTION_LINEAR_ID), 2);
+        assert!(0 == get_value(COLLECTION_PRIME_NUMBER_ID), 3);
 
-        decrement(user_2);
-        assert!(get_value() == 997, 1);
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 998, 1);
+        assert!(0 == get_value(COLLECTION_LINEAR_ID), 2);
+        assert!(0 == get_value(COLLECTION_PRIME_NUMBER_ID), 3);
 
-        decrement(user_1);
-        assert!(get_value() == 996, 1);
+        decrement(user_2, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 997, 1);
+        assert!(0 == get_value(COLLECTION_LINEAR_ID), 2);
+        assert!(0 == get_value(COLLECTION_PRIME_NUMBER_ID), 3);
+
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 996, 1);
+        assert!(0 == get_value(COLLECTION_LINEAR_ID), 2);
+        assert!(0 == get_value(COLLECTION_PRIME_NUMBER_ID), 3);
 
         let event_length = vector::length(&emitted_events<CountRecordEvent>());
         assert!(event_length == 4, 3);
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_decrement_not_fail_when_zero(framework: &signer, user_1: &signer) acquires Count {
+    public fun test_decrement_not_fail_when_zero(framework: &signer, user_1: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -210,15 +272,15 @@ module aptos_count::count {
         init_module(owner);
         init_module_for_testing(owner);
 
-        decrement(user_1);
-        decrement(user_1);
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
 
-        assert!(get_value() == 0, 1);
+        assert!(get_value(COLLECTION_FIBONACCI_ID) == 0, 1);
     }
 
     #[randomness]
-    entry fun random(user: &signer) acquires Count {
-        perform_action(user, COUNT_ACTION_RANDOM);
+    entry fun random(user: &signer, collection_id: u32) acquires CountCollection {
+        perform_action(user, collection_id, COUNT_ACTION_RANDOM);
     }
 
     fun update_value_from_action(value: &mut u128, action: u8) {
@@ -245,7 +307,7 @@ module aptos_count::count {
     }
 
     #[test(framework = @0x1, user_1 = @0x123, user_2 = @0x321)]
-    public fun test_random(framework: &signer, user_1: &signer, user_2: &signer) acquires Count {
+    public fun test_random(framework: &signer, user_1: &signer, user_2: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
         // randomness::initialize_for_testing(framework);
         // randomness::set_seed(x"0000000000000000000000000000000000000000000000000000000000000001");
@@ -259,27 +321,27 @@ module aptos_count::count {
         init_module(owner);
         init_module_for_testing(owner);
 
-        vector::push_back(&mut actual_value, get_value());
+        vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
 
         timestamp::update_global_time_for_test(2);
-        random(user_1);
-        vector::push_back(&mut actual_value, get_value());
+        random(user_1, COLLECTION_FIBONACCI_ID);
+        vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
 
         timestamp::update_global_time_for_test(3);
-        random(user_2);
-        vector::push_back(&mut actual_value, get_value());
+        random(user_2, COLLECTION_FIBONACCI_ID);
+        vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
 
         timestamp::update_global_time_for_test(5);
-        random(user_2);
-        vector::push_back(&mut actual_value, get_value());
+        random(user_2, COLLECTION_FIBONACCI_ID);
+        vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
 
         timestamp::update_global_time_for_test(6);
-        random(user_2);
-        vector::push_back(&mut actual_value, get_value());
+        random(user_2, COLLECTION_FIBONACCI_ID);
+        vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
 
         timestamp::update_global_time_for_test(8);
-        random(user_1);
-        vector::push_back(&mut actual_value, get_value());
+        random(user_1, COLLECTION_FIBONACCI_ID);
+        vector::push_back(&mut actual_value, get_value(COLLECTION_FIBONACCI_ID));
 
         let expected_value: vector<u128> = vector[
             0, 1, 0, 0, 1, 2
@@ -326,18 +388,21 @@ module aptos_count::count {
     }
 
     #[view]
-    public fun get_value(): u128 acquires Count {
-        borrow_global<Count>(@aptos_count).value
+    public fun get_value(collection_id: u32): u128 acquires CountCollection {
+        let collection = borrow_global<CountCollection>(@aptos_count);
+        table::borrow(&collection.items, collection_id).value
     }
 
     #[view]
-    public fun get_records_length(): u64 acquires Count {
+    public fun get_records_length(collection_id: u32): u64 acquires CountCollection {
+        let collection = borrow_global<CountCollection>(@aptos_count);
+
         smart_vector::length(
-            &borrow_global<Count>(@aptos_count).records)
+            &table::borrow(&collection.items, collection_id).records)
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_get_records_length(framework: &signer, user_1: &signer) acquires Count {
+    public fun test_get_records_length(framework: &signer, user_1: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -347,22 +412,24 @@ module aptos_count::count {
         init_module(owner);
         init_module_for_testing(owner);
 
-        increment(user_1);
-        increment(user_1);
-        decrement(user_1);
+        increment(user_1, COLLECTION_FIBONACCI_ID);
+        increment(user_1, COLLECTION_FIBONACCI_ID);
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
 
-        assert!(get_records_length() == 3, 4);
+        assert!(get_records_length(COLLECTION_FIBONACCI_ID) == 3, 4);
     }
 
     #[view]
-    public fun query_all_records(): vector<CountRecord> acquires Count {
-        let all_records = smart_vector::to_vector(&borrow_global<Count>(@aptos_count).records);
+    public fun query_all_records(collection_id: u32): vector<CountRecord> acquires CountCollection {
+        let collection = borrow_global<CountCollection>(@aptos_count);
+        let count = table::borrow(&collection.items, collection_id);
+        let all_records = smart_vector::to_vector(&count.records);
         vector::reverse(&mut all_records);
         all_records
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_query_all_records_in_descending_order(framework: &signer, user_1: &signer) acquires Count {
+    public fun test_query_all_records_in_descending_order(framework: &signer, user_1: &signer) acquires CountCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -373,11 +440,11 @@ module aptos_count::count {
         init_module_for_testing(owner);
 
         timestamp::fast_forward_seconds(1);
-        increment(user_1);
+        increment(user_1, COLLECTION_FIBONACCI_ID);
         timestamp::fast_forward_seconds(1);
-        decrement(user_1);
+        decrement(user_1, COLLECTION_FIBONACCI_ID);
         timestamp::fast_forward_seconds(1);
-        increment(user_1);
+        increment(user_1, COLLECTION_FIBONACCI_ID);
 
         let expected: vector<CountRecord> = vector[
             CountRecord {
@@ -396,7 +463,7 @@ module aptos_count::count {
                 action: 1
             }
         ];
-        let actual = query_all_records();
+        let actual = query_all_records(COLLECTION_FIBONACCI_ID);
 
         assert!(expected == actual, 1);
     }
