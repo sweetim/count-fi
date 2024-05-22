@@ -131,7 +131,6 @@ module aptos_count::count {
         } else if (collection_id == COLLECTION_LINEAR_ID) {
 
         };
-        // aptos_count::nft::mint(user_address, value);
 
         event::emit(CountRecordEvent {
             action: count_record.action,

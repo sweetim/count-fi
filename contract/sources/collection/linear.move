@@ -1,4 +1,4 @@
-module aptos_count::fibonacci {
+module aptos_count::linear {
     use std::string;
     use std::string::String;
     use aptos_std::smart_vector;
@@ -7,20 +7,20 @@ module aptos_count::fibonacci {
     #[test_only]
     use std::signer;
     #[test_only]
-    use std::vector;
-    #[test_only]
     use aptos_framework::account;
     #[test_only]
     use aptos_framework::timestamp;
+    #[test_only]
+    use aptos_count::utils;
     #[test_only]
     use aptos_count::utils::iterate_with_index;
 
     friend aptos_count::count;
 
-    const COLLECTION_NAME: vector<u8> = b"COUNT - Fibonacci";
-    const DESCRIPTION: vector<u8>  = b"series of numbers where each number is the sum of the two preceding numbers";
-    const IMAGE_URI: vector<u8>  = b"https://improveyourmathfluency.com/wp-content/uploads/2015/07/fibonacci.jpg";
-    const MAX_SUPPLY: u64 = 186;
+    const COLLECTION_NAME: vector<u8> = b"COUNT - Linear";
+    const DESCRIPTION: vector<u8>  = b"a sequence of numbers where the difference between every term is the same";
+    const IMAGE_URI: vector<u8>  = b"https://www.radfordmathematics.com/algebra/sequences-series/difference-method-sequences/linear-sequence-formula.jpg";
+    const MAX_SUPPLY: u64 = 1 << 63;
 
     struct CollectorOwner has key, store {
         timestamp_us: u64,
@@ -29,20 +29,20 @@ module aptos_count::fibonacci {
         index: u128,
     }
 
-    struct FibonacciCollectionMetadata has key, store, drop {
+    struct LinearCollectionMetadata has key, store, drop {
         title: String,
         description: String,
         uri: String,
         max_supply: u64
     }
 
-    struct FibonacciCollection has key, store {
+    struct LinearCollection has key, store {
         owners: SmartVector<CollectorOwner>,
         next_index: u128,
     }
 
     fun init_module(owner: &signer) {
-        move_to(owner, FibonacciCollection {
+        move_to(owner, LinearCollection {
             next_index: 0,
             owners: smart_vector::new<CollectorOwner>()
         });
@@ -56,13 +56,13 @@ module aptos_count::fibonacci {
         );
     }
 
-    public(friend) fun validate_and_mint(user: address, value: u128, timestamp_us: u64): bool acquires FibonacciCollection {
+    public(friend) fun validate_and_mint(user: address, value: u128, timestamp_us: u64): bool acquires LinearCollection {
         let next_index  = get_next_index();
         let next_value = get_next_value();
         let is_next_value = next_value == value;
 
         if (is_next_value) {
-            let collection = borrow_global_mut<FibonacciCollection>(@aptos_count);
+            let collection = borrow_global_mut<LinearCollection>(@aptos_count);
 
             smart_vector::push_back(&mut collection.owners, CollectorOwner {
                 timestamp_us,
@@ -95,8 +95,8 @@ module aptos_count::fibonacci {
     }
 
     #[view]
-    public fun get_collection_description(): FibonacciCollectionMetadata {
-        return FibonacciCollectionMetadata {
+    public fun get_collection_description(): LinearCollectionMetadata {
+        return LinearCollectionMetadata {
             title: string::utf8(COLLECTION_NAME),
             description: string::utf8(DESCRIPTION),
             uri: string::utf8(IMAGE_URI),
@@ -105,30 +105,19 @@ module aptos_count::fibonacci {
     }
 
     #[view]
-    public fun get_next_index(): u128 acquires FibonacciCollection {
-        let collection = borrow_global<FibonacciCollection>(@aptos_count);
+    public fun get_next_index(): u128 acquires LinearCollection {
+        let collection = borrow_global<LinearCollection>(@aptos_count);
         collection.next_index
     }
 
     #[view]
-    public fun get_next_value(): u128 acquires FibonacciCollection {
-        let collection = borrow_global<FibonacciCollection>(@aptos_count);
+    public fun get_next_value(): u128 acquires LinearCollection {
+        let collection = borrow_global<LinearCollection>(@aptos_count);
         get_value(collection.next_index)
     }
 
     fun get_value(n: u128): u128 {
-        if (n == 0) return 0;
-        if (n == 1) return 1;
-
-        let a = 0;
-        let b = 1;
-
-        for (i in 2..(n + 1)) {
-            b = a + b;
-            a = b - a;
-        };
-
-        b
+        n
     }
 
     #[test_only]
@@ -137,34 +126,20 @@ module aptos_count::fibonacci {
     }
 
     #[test_only]
-    fun increment_next_index() acquires FibonacciCollection {
-        let collection = borrow_global_mut<FibonacciCollection>(@aptos_count);
+    fun increment_next_index() acquires LinearCollection {
+        let collection = borrow_global_mut<LinearCollection>(@aptos_count);
         collection.next_index = collection.next_index + 1;
     }
 
     #[test]
     public fun test_get_value() {
-        let samples = vector[
-            0,
-            1,
-            1,
-            2,
-            3,
-            5,
-            8,
-            13,
-            21,
-            34,
-            55,
-        ];
-
-        vector::enumerate_ref(
-            &samples,
-            |i, s| assert!(get_value((i as u128)) == *s, i));
+        utils::iterate_with_index(100, |index| {
+            assert!(get_value((index as u128)) == (index as u128), 1);
+        });
     }
 
     #[test(framework = @0x1)]
-    public fun test_get_next_value(framework: &signer) acquires FibonacciCollection {
+    public fun test_get_next_value(framework: &signer) acquires LinearCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -172,27 +147,19 @@ module aptos_count::fibonacci {
         aptos_count::nft::init_module_for_testing(owner);
         init_module(owner);
 
-        let expected = vector[
-            0,
-            1,
-            1,
-            2,
-            3,
-        ];
-
         iterate_with_index(5, |i| {
             let index = get_next_index();
             let value = get_next_value();
+            let i = (i as u128);
 
-            let expected_value = *vector::borrow(&expected, i);
-            assert!(expected_value == value, 1);
-            assert!(index == (i as u128), 2);
+            assert!(i == value, 1);
+            assert!(i == index, 2);
             increment_next_index();
         });
     }
 
     #[test(framework = @0x1, user_1 = @0x123)]
-    public fun test_validate_and_mint_with_fibonacci_sequence(framework: &signer, user_1: &signer) acquires FibonacciCollection {
+    public fun test_validate_and_mint_with_fibonacci_sequence(framework: &signer, user_1: &signer) acquires LinearCollection {
         timestamp::set_time_has_started_for_testing(framework);
 
         let owner = &account::create_account_for_test(@aptos_count);
@@ -205,35 +172,9 @@ module aptos_count::fibonacci {
 
         assert!(get_next_index() == 0, 1);
 
-        let is_success_expected = vector[
-            true,
-            true,
-            true,
-            true,
-            true,
-            false,
-            true,
-            false,
-            false,
-            true,
-        ];
-
-        let input_value: vector<u128> = vector[
-            0,
-            1,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8
-        ];
-
-        vector::zip(input_value, is_success_expected, |input, expected| {
-            let actual = validate_and_mint(user_1_address, input, 0);
-            assert!(actual == expected, 1);
+        iterate_with_index(10, |index| {
+            let actual = validate_and_mint(user_1_address, (index as u128), 0);
+            assert!(actual == true, 1);
         });
     }
 }

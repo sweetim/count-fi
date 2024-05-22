@@ -18,6 +18,8 @@ module aptos_count::nft {
     use aptos_token_objects::property_map;
 
     friend aptos_count::fibonacci;
+    friend aptos_count::prime_number;
+    friend aptos_count::linear;
 
     struct NftCollectionCreator has key {
         extend_ref: ExtendRef
