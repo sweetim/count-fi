@@ -17,7 +17,7 @@ module aptos_count::linear {
 
     friend aptos_count::count;
 
-    const COLLECTION_NAME: vector<u8> = b"COUNT - Linear";
+    const COLLECTION_NAME: vector<u8> = b"Linear";
     const DESCRIPTION: vector<u8>  = b"a sequence of numbers where the difference between every term is the same";
     const IMAGE_URI: vector<u8>  = b"https://www.radfordmathematics.com/algebra/sequences-series/difference-method-sequences/linear-sequence-formula.jpg";
     const MAX_SUPPLY: u64 = 1 << 63;
@@ -30,7 +30,7 @@ module aptos_count::linear {
     }
 
     struct LinearCollectionMetadata has key, store, drop {
-        title: String,
+        name: String,
         description: String,
         uri: String,
         max_supply: u64
@@ -49,7 +49,7 @@ module aptos_count::linear {
 
         let collection_description = get_collection_description();
         aptos_count::nft::create_collection(
-            collection_description.title,
+            collection_description.name,
             collection_description.description,
             collection_description.max_supply,
             collection_description.uri
@@ -86,7 +86,7 @@ module aptos_count::linear {
 
         aptos_count::nft::mint(
             user,
-            get_collection_description().title,
+            get_collection_description().name,
             description,
             uri,
             nft_name,
@@ -95,23 +95,22 @@ module aptos_count::linear {
     }
 
     #[view]
-    public fun get_collection_description(): LinearCollectionMetadata {
+    public(friend) fun get_collection_description(): LinearCollectionMetadata {
         return LinearCollectionMetadata {
-            title: string::utf8(COLLECTION_NAME),
+            name: string::utf8(COLLECTION_NAME),
             description: string::utf8(DESCRIPTION),
             uri: string::utf8(IMAGE_URI),
             max_supply: MAX_SUPPLY,
         }
     }
 
-    #[view]
-    public fun get_next_index(): u128 acquires LinearCollection {
+    public(friend) fun get_next_index(): u128 acquires LinearCollection {
         let collection = borrow_global<LinearCollection>(@aptos_count);
         collection.next_index
     }
 
     #[view]
-    public fun get_next_value(): u128 acquires LinearCollection {
+    public(friend) fun get_next_value(): u128 acquires LinearCollection {
         let collection = borrow_global<LinearCollection>(@aptos_count);
         get_value(collection.next_index)
     }

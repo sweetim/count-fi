@@ -19,7 +19,7 @@ module aptos_count::prime_number {
 
     friend aptos_count::count;
 
-    const COLLECTION_NAME: vector<u8> = b"COUNT - Prime Number";
+    const COLLECTION_NAME: vector<u8> = b"Prime Number";
     const DESCRIPTION: vector<u8>  = b"a number that can only be divided by itself and 1 without remainders";
     const IMAGE_URI: vector<u8>  = b"https://i0.wp.com/mymathresources.com/wp-content/uploads/2020/06/Prime-Numbers-Poster-3.jpg?resize=800%2C533&ssl=1";
     const MAX_SUPPLY: u64 = 664579;
@@ -32,7 +32,7 @@ module aptos_count::prime_number {
     }
 
     struct PrimeNumberCollectionMetadata has key, store, drop {
-        title: String,
+        name: String,
         description: String,
         uri: String,
         max_supply: u64
@@ -51,7 +51,7 @@ module aptos_count::prime_number {
 
         let collection_description = get_collection_description();
         aptos_count::nft::create_collection(
-            collection_description.title,
+            collection_description.name,
             collection_description.description,
             collection_description.max_supply,
             collection_description.uri
@@ -88,7 +88,7 @@ module aptos_count::prime_number {
 
         aptos_count::nft::mint(
             user,
-            get_collection_description().title,
+            get_collection_description().name,
             description,
             uri,
             nft_name,
@@ -99,21 +99,20 @@ module aptos_count::prime_number {
     #[view]
     public fun get_collection_description(): PrimeNumberCollectionMetadata {
         return PrimeNumberCollectionMetadata {
-            title: string::utf8(COLLECTION_NAME),
+            name: string::utf8(COLLECTION_NAME),
             description: string::utf8(DESCRIPTION),
             uri: string::utf8(IMAGE_URI),
             max_supply: MAX_SUPPLY,
         }
     }
 
-    #[view]
-    public fun get_next_index(): u128 acquires PrimeNumberCollection {
+    public(friend) fun get_next_index(): u128 acquires PrimeNumberCollection {
         let collection = borrow_global<PrimeNumberCollection>(@aptos_count);
         collection.next_index
     }
 
     #[view]
-    public fun get_next_value(): u128 acquires PrimeNumberCollection {
+    public(friend) fun get_next_value(): u128 acquires PrimeNumberCollection {
         let collection = borrow_global<PrimeNumberCollection>(@aptos_count);
         get_value(collection.next_index)
     }

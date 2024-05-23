@@ -1,25 +1,47 @@
-import { Col, Grid, Row } from 'antd'
-import { FC, useEffect, useState } from 'react'
-import { CounterRecord, CounterRecordEvent, getAllRecords, getValue } from '../module/count/contract';
-import { ActionCounter, RecordTimeline } from '../module/count/components';
-import { useChannel } from 'ably/react';
-import { ABLY_APTOS_COUNTER_CHANNEL_NAME, getAptosClient } from '../common';
+import {
+  Col,
+  Grid,
+  Row,
+} from "antd"
+import {
+  FC,
+  useEffect,
+  useState,
+} from "react"
+import {
+  CounterRecord,
+  CounterRecordEvent,
+  getAllRecords,
+  getValue,
+} from "../contract"
+import {
+  ActionCounter,
+  RecordTimeline,
+} from "../module/count/components"
+import { useChannel } from "ably/react"
+import {
+  ABLY_APTOS_COUNTER_CHANNEL_NAME,
+  getAptosClient,
+} from "../common"
+import { useLoaderData } from "react-router-dom"
 
-const { useBreakpoint } = Grid;
+const { useBreakpoint } = Grid
 
 const CollectionTypePage: FC = () => {
+  const { collectionTypeId } = useLoaderData() as { collectionTypeId: string }
+
   const [value, setValue] = useState("...")
   const [allRecords, setAllRecords] = useState<CounterRecord[]>([])
 
   useEffect(() => {
-    getValue().then(v => setValue(v.toString()))
+    getValue("Fibonacci").then(v => setValue(v.toString()))
   }, [])
 
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       const aptos = getAptosClient()
 
-      const allRecords = await getAllRecords()
+      const allRecords = await getAllRecords(collectionTypeId)
 
       const uniqueUserAddress = [...new Set(allRecords.map(r => r.user))]
       const uniqueUserANS = await Promise.all(uniqueUserAddress.map(async (address) => {
@@ -27,7 +49,7 @@ const CollectionTypePage: FC = () => {
 
         return {
           ans: ans && `${ans}.apt`,
-          address
+          address,
         }
       }))
 
@@ -37,7 +59,7 @@ const CollectionTypePage: FC = () => {
 
       const allRecordsWithAns = allRecords.map((record) => ({
         ...record,
-        user: ansLUT[record.user] || record.user
+        user: ansLUT[record.user] || record.user,
       }))
 
       setAllRecords(allRecordsWithAns)
@@ -49,17 +71,18 @@ const CollectionTypePage: FC = () => {
     (message) => {
       const data: CounterRecordEvent[] = message.data
 
-      if (allRecords.length === 0) return;
+      if (allRecords.length === 0) return
 
       data.sort((a, b) => Number(b.timestamp_us) - Number(a.timestamp_us))
 
       const latestData = data.filter(({ timestamp_us }) => timestamp_us > allRecords[0].timestamp_us)
 
-      if (latestData.length === 0) return;
+      if (latestData.length === 0) return
 
       setAllRecords(prev => [...latestData, ...prev])
       setValue(latestData[0].value)
-    });
+    },
+  )
 
   const screens = useBreakpoint()
 
@@ -71,24 +94,26 @@ const CollectionTypePage: FC = () => {
         <Row style={{ paddingTop: "0.5rem", paddingBottom: "0.5rem", height: `${getHeight}` }}>
           <ActionCounter value={value} />
         </Row>
-        {allRecords.length > 0 && <Row style={{ height: "100%", overflow: "auto", padding: "20px" }}>
-          <RecordTimeline records={allRecords} />
-        </Row>}
+        {allRecords.length > 0 && (
+          <Row style={{ height: "100%", overflow: "auto", padding: "20px" }}>
+            <RecordTimeline records={allRecords} />
+          </Row>
+        )}
       </>
     )
   }
 
   const renderDesktop = () => {
     return (
-      <Row
-        className="h-full">
+      <Row className="h-full">
         <Col sm={{ flex: "auto" }}>
           <ActionCounter value={value} />
         </Col>
-        {allRecords.length > 0 && <Col span={16}
-          className="overflow-auto p-5 h-full">
-          <RecordTimeline records={allRecords} />
-        </Col>}
+        {allRecords.length > 0 && (
+          <Col span={16} className="overflow-auto p-5 h-full">
+            <RecordTimeline records={allRecords} />
+          </Col>
+        )}
       </Row>
     )
   }

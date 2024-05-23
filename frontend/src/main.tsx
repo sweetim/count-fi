@@ -1,27 +1,33 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { ConfigProvider, ThemeConfig, theme } from 'antd'
-import { AptosWalletAdapterProvider } from '@aptos-labs/wallet-adapter-react'
-import { PetraWallet } from 'petra-plugin-wallet-adapter'
-import { PontemWallet } from '@pontem/wallet-adapter-plugin';
-import { AblyProvider } from 'ably/react'
+import React from "react"
+import ReactDOM from "react-dom/client"
+import {
+  ConfigProvider,
+  theme,
+  ThemeConfig,
+} from "antd"
+import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react"
+import { PetraWallet } from "petra-plugin-wallet-adapter"
+import { PontemWallet } from "@pontem/wallet-adapter-plugin"
+import { AblyProvider } from "ably/react"
 import {
   createBrowserRouter,
   RouterProvider,
-} from "react-router-dom";
+} from "react-router-dom"
 
-import './index.css'
-import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
+import "./index.css"
+import "@aptos-labs/wallet-adapter-ant-design/dist/index.css"
 
-import CollectionTypePage from './routes/CollectionTypePage.tsx'
-import RootPage from './routes/RootPage.tsx'
-import CollectionPage from './routes/CollectionPage.tsx'
+import {
+  CollectionPage,
+  CollectionTypePage,
+  RootPage,
+} from "./routes"
 
 import { getAblyClient } from "./common"
 
 const wallets = [
   new PetraWallet(),
-  new PontemWallet()
+  new PontemWallet(),
 ]
 
 const antThemeConfig: ThemeConfig = {
@@ -32,12 +38,12 @@ const antThemeConfig: ThemeConfig = {
   components: {
     Layout: {
       headerBg: "#192435",
-      bodyBg: "#1e293b"
+      bodyBg: "#1e293b",
     },
     Timeline: {
-      dotBg: "#1e293b"
-    }
-  }
+      dotBg: "#1e293b",
+    },
+  },
 }
 
 const router = createBrowserRouter([
@@ -59,19 +65,20 @@ const router = createBrowserRouter([
         loader: async ({ params }) => {
           const { collectionTypeId } = params
           return {
-            collectionTypeId
+            collectionTypeId,
           }
-        }
-      }
-    ]
-  }
-]);
+        },
+      },
+    ],
+  },
+])
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AptosWalletAdapterProvider
       plugins={wallets}
-      autoConnect={true}>
+      autoConnect={true}
+    >
       <ConfigProvider theme={antThemeConfig}>
         <AblyProvider client={getAblyClient()}>
           <RouterProvider router={router} />

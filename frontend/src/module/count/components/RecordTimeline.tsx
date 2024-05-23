@@ -1,9 +1,22 @@
 import { FC } from "react"
-import { Grid, Space, Timeline, TimelineItemProps, Typography } from "antd"
-import { MinusCircleOutlined, PlusCircleOutlined, QuestionCircleOutlined } from "@ant-design/icons"
+import {
+  Grid,
+  Space,
+  Timeline,
+  TimelineItemProps,
+  Typography,
+} from "antd"
+import {
+  MinusCircleOutlined,
+  PlusCircleOutlined,
+  QuestionCircleOutlined,
+} from "@ant-design/icons"
 import { formatDistanceToNow } from "date-fns"
 
-import { CounterAction, CounterRecord } from "../contract"
+import {
+  CounterAction,
+  CounterRecord,
+} from "@/contract"
 import { getAptosExplorerUrl } from "@/common/aptosClient"
 
 export type RecordTimelineProps = {
@@ -11,7 +24,7 @@ export type RecordTimelineProps = {
 }
 
 const { Text, Link } = Typography
-const { useBreakpoint } = Grid;
+const { useBreakpoint } = Grid
 
 const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
   const recordTemplate = (record: CounterRecord) => {
@@ -54,15 +67,13 @@ const RecordTimeline: FC<RecordTimelineProps> = ({ records }) => {
   const timelineItems = records.map<TimelineItemProps>(record => ({
     // position: getPosition(record.action),
     dot: getActionIcon(record.action),
-    children: recordTemplate(record)
+    children: recordTemplate(record),
   }))
 
   const screens = useBreakpoint()
   const mode = screens.xs ? "left" : "alternate"
 
-  return (
-    <Timeline mode={mode} items={timelineItems} />
-  )
+  return <Timeline mode={mode} items={timelineItems} />
 }
 
 export default RecordTimeline

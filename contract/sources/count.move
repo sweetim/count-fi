@@ -1,6 +1,7 @@
 module aptos_count::count {
     use std::timestamp;
     use std::signer;
+    use std::string::String;
     use std::vector;
 
     use aptos_std::smart_vector;
@@ -43,6 +44,13 @@ module aptos_count::count {
         timestamp_us: u64,
         user: address,
         action: u8,
+    }
+
+    struct CollectionMetadata has key, store, drop {
+        title: String,
+        description: String,
+        uri: String,
+        max_supply: u64
     }
 
     #[event]
@@ -127,9 +135,9 @@ module aptos_count::count {
         if (collection_id == COLLECTION_FIBONACCI_ID) {
             aptos_count::fibonacci::validate_and_mint(user_address, count.value, current_timestamp_us);
         } else if (collection_id == COLLECTION_PRIME_NUMBER_ID) {
-
+            aptos_count::prime_number::validate_and_mint(user_address, count.value, current_timestamp_us);
         } else if (collection_id == COLLECTION_LINEAR_ID) {
-
+            aptos_count::linear::validate_and_mint(user_address, count.value, current_timestamp_us);
         };
 
         event::emit(CountRecordEvent {
@@ -241,9 +249,12 @@ module aptos_count::count {
         account::create_account_for_test(signer::address_of(user_2));
 
         init_module(owner);
+
         aptos_count::ft::init_module_for_testing(owner);
         aptos_count::nft::init_module_for_testing(owner);
         aptos_count::fibonacci::init_module_for_testing(owner);
+        aptos_count::linear::init_module_for_testing(owner);
+        aptos_count::prime_number::init_module_for_testing(owner);
 
         increment(user_1, COLLECTION_FIBONACCI_ID);
         assert!(get_value(COLLECTION_FIBONACCI_ID) == 1, 1);

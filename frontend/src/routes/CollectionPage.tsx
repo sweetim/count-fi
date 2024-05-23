@@ -1,13 +1,19 @@
-import CollectionGrid from "@/module/count/components/CollectionGrid";
-import { CountCollectionItem, getAllCollection } from "@/module/count/contract";
-import ParticlesLogo from "@/module/tsparticle/ParticlesLogo";
-import { useEffect, useState } from "react";
+import CollectionGrid from "@/module/count/components/CollectionGrid"
+import {
+  CollectionMetadata,
+  getAllCollectionDescription,
+} from "@/contract"
+import ParticlesLogo from "@/module/tsparticle/ParticlesLogo"
+import {
+  useEffect,
+  useState,
+} from "react"
 
 export default function CollectionPage() {
-  const [countCollectionItems, setCountCollectionItems] = useState<CountCollectionItem[]>([])
+  const [countCollectionItems, setCountCollectionItems] = useState<CollectionMetadata[]>([])
 
   useEffect(() => {
-    getAllCollection().then(res => setCountCollectionItems(res))
+    getAllCollectionDescription().then(res => setCountCollectionItems(res))
   }, [])
 
   return (
@@ -23,7 +29,10 @@ export default function CollectionPage() {
             </h1>
             <p>count to mint a NFT</p>
             {/* <p></p> */}
-            <p>each NFT collection is limited by the mathematical properties, this creates an intrinsic value for each minted NFT through collaboration of many users to achieve that count together</p>
+            <p>
+              each NFT collection is limited by the mathematical properties, this creates an intrinsic value for each
+              minted NFT through collaboration of many users to achieve that count together
+            </p>
           </div>
         </div>
       </div>
@@ -33,4 +42,3 @@ export default function CollectionPage() {
     </div>
   )
 }
-

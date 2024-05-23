@@ -1,10 +1,13 @@
 import { FC } from "react"
-import { Badge, Card } from "antd"
-import { CountCollectionItem } from "../contract"
+import {
+  Badge,
+  Card,
+} from "antd"
+import { CollectionMetadata } from "@/contract"
 
 const { Meta } = Card
 
-const CollectionCard: FC<CountCollectionItem> = (props) => {
+const CollectionCard: FC<CollectionMetadata> = (props) => {
   return (
     <Card
       className="min-h-72"
@@ -15,7 +18,8 @@ const CollectionCard: FC<CountCollectionItem> = (props) => {
         <img
           className="max-h-32 min-h-32 !rounded-none"
           alt={props.description}
-          src={props.uri} />
+          src={props.uri}
+        />
       }
     >
       <Meta description={props.description} />

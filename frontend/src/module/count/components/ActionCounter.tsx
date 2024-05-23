@@ -1,9 +1,27 @@
-import { Badge, Button, Flex, Typography } from "antd"
-import { CSSProperties, FC, useEffect, useState } from "react"
-import { MinusOutlined, PlusOutlined } from "@ant-design/icons"
+import {
+  Badge,
+  Button,
+  Flex,
+  Typography,
+} from "antd"
+import {
+  CSSProperties,
+  FC,
+  useEffect,
+  useState,
+} from "react"
+import {
+  MinusOutlined,
+  PlusOutlined,
+} from "@ant-design/icons"
 import { useWallet } from "@aptos-labs/wallet-adapter-react"
 
-import { decrementTransactionData, getNextFibonacciValue, incrementTransactionData, randomTransactionData } from "../contract"
+import {
+  decrementTransactionData,
+  getNextValue,
+  incrementTransactionData,
+  randomTransactionData,
+} from "@/contract"
 import { getAptosClient } from "@/common/aptosClient"
 import { useLoaderData } from "react-router-dom"
 
@@ -13,12 +31,12 @@ const aptos = getAptosClient()
 
 const actionButtonStyle: CSSProperties = {
   width: "48px",
-  height: "48px"
+  height: "48px",
 }
 
 const actionIconStyle: CSSProperties = {
   fontSize: "32px",
-  color: "#FFF"
+  color: "#FFF",
 }
 export type ActionCounterProps = {
   value: string
@@ -28,17 +46,17 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
   const { collectionTypeId } = useLoaderData() as { collectionTypeId: string }
   const { signAndSubmitTransaction, account } = useWallet()
 
-  const [nextFibonacciValue, setNextFibonacciValue] = useState("...")
+  const [nextValue, setNextValue] = useState("...")
 
   useEffect(() => {
-    getNextFibonacciValue().then(v => setNextFibonacciValue(v.toString()))
+    getNextValue(collectionTypeId).then((v: any) => setNextValue(v.toString()))
   }, [value])
 
   async function incrementClickHandler() {
-    if (!account) return;
+    if (!account) return
 
     try {
-      const response: any = await signAndSubmitTransaction(incrementTransactionData())
+      const response: any = await signAndSubmitTransaction(incrementTransactionData(collectionTypeId))
       await aptos.waitForTransaction({ transactionHash: response.hash })
     } catch (error) {
       console.log(error)
@@ -46,10 +64,10 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
   }
 
   async function decrementClickHandler() {
-    if (!account) return;
+    if (!account) return
 
     try {
-      const response: any = await signAndSubmitTransaction(decrementTransactionData())
+      const response: any = await signAndSubmitTransaction(decrementTransactionData(collectionTypeId))
       await aptos.waitForTransaction({ transactionHash: response.hash })
     } catch (error) {
       console.log(error)
@@ -57,17 +75,22 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
   }
 
   async function randomClickHandler() {
-    if (!account) return;
+    if (!account) return
 
     try {
-      const response: any = await signAndSubmitTransaction(randomTransactionData())
+      const response: any = await signAndSubmitTransaction(randomTransactionData(collectionTypeId))
       await aptos.waitForTransaction({ transactionHash: response.hash })
     } catch (error) {
       console.log(error)
     }
   }
 
-  const countLeftToMint = Math.abs(Number(nextFibonacciValue) - Number(value)) || "..."
+  const countLeftToMint = Math.abs(Number(nextValue) - Number(value))
+  const countLeftToMintText = Number.isNaN(countLeftToMint)
+    ? "..."
+    : countLeftToMint === 0
+    ? 1
+    : countLeftToMint.toString()
 
   return (
     <Flex
@@ -75,24 +98,48 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
       align="center"
       gap="small"
       vertical
-      style={{ height: "100%", width: "100%" }}>
-      {account && <Button type="text"
-        style={actionButtonStyle}
-        icon={<PlusOutlined
-          style={actionIconStyle} />}
-        shape="circle"
-        onClick={incrementClickHandler} />}
-      <Title style={{ fontSize: "8rem", margin: 0, cursor: `${account ? "pointer" : "default"}` }}
-        onClick={randomClickHandler}>{value}</Title>
-      {account && <Button type="text"
-        style={actionButtonStyle}
-        icon={<MinusOutlined
-          style={actionIconStyle} />}
-        shape="circle"
-        onClick={decrementClickHandler} />}
-        <Text>
-          <Badge style={{ background: "#fffb8f", marginRight: "5px" }} count={countLeftToMint} overflowCount={100000} />
-          {`count left to mint a ${collectionTypeId.toLocaleLowerCase()} NFT`}</Text>
+      className="h-full w-full"
+    >
+      {account && (
+        <Button
+          type="text"
+          style={actionButtonStyle}
+          icon={
+            <PlusOutlined
+              style={actionIconStyle}
+            />
+          }
+          shape="circle"
+          onClick={incrementClickHandler}
+        />
+      )}
+      <Title
+        className={`!text-9xl !m-1 ${account ? "cursor-pointer" : "cursor-default"}`}
+        onClick={randomClickHandler}
+      >
+        {value}
+      </Title>
+      {account && (
+        <Button
+          type="text"
+          style={actionButtonStyle}
+          icon={
+            <MinusOutlined
+              style={actionIconStyle}
+            />
+          }
+          shape="circle"
+          onClick={decrementClickHandler}
+        />
+      )}
+      <Text>
+        <Badge
+          style={{ background: "#fffb8f", marginRight: "5px" }}
+          count={countLeftToMintText}
+          overflowCount={100000}
+        />
+        {`count left to mint a NFT`}
+      </Text>
     </Flex>
   )
 }
