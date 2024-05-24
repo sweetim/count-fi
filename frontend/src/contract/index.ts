@@ -20,14 +20,6 @@ export type CounterRecord = {
   user: string
 }
 
-const CollectionId = {
-  Fibonacci: 0,
-  PrimeNumber: 1,
-  Linear: 2,
-} as const
-
-type CollectionIdKey = keyof typeof CollectionId
-
 const CollectionModuleName = {
   Fibonacci: "fibonacci",
   PrimeNumber: "prime_number",
@@ -57,12 +49,12 @@ const MODULE_ADDRESS = "0x5ed4664ecfac74f55a37fb7d1122eee8925d93216076cdf0ca9a0e
 
 const aptos = getAptosClient()
 
-export async function getValue(collectionId: keyof typeof CollectionId): Promise<number> {
+export async function getValue(collectionId: string): Promise<number> {
   const [value] = await aptos.view<number[]>({
     payload: {
       function: `${MODULE_ADDRESS}::count::get_value`,
       functionArguments: [
-        CollectionId[collectionId],
+        collectionId,
       ],
     },
   })
