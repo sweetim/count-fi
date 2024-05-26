@@ -131,7 +131,7 @@ const CollectionTypePage: FC = () => {
 
           const valueDiv = () => {
             const valueText = i < 2
-              ? <Avatar size={24} className="bg-slate-700">0</Avatar>
+              ? <Avatar size={24} className="bg-slate-700">{i}</Avatar>
               : i === 2
               ? (
                 <div className="bg-slate-700 p-1 px-3 rounded-full text-xs">

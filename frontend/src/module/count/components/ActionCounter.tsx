@@ -141,20 +141,22 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
         />
         {`count left to mint a NFT`}
       </Text>
-      <Space size="middle" className="mt-2">
-        <div className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
-          <Space size="middle">
-            <Avatar className="text-slate-800" src="/count.svg"></Avatar>
-            <p className="text-xl text-white">8</p>
-          </Space>
-        </div>
-        <div className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
-          <Space size="middle">
-            <Avatar src="/aptos.svg"></Avatar>
-            <p className="text-xl text-white">8.383</p>
-          </Space>
-        </div>
-      </Space>
+      {account && (
+        <Space size="middle" className="mt-2">
+          <div className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
+            <Space size="middle">
+              <Avatar className="text-slate-800" src="/count.svg"></Avatar>
+              <p className="text-xl text-white">8</p>
+            </Space>
+          </div>
+          <div className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
+            <Space size="middle">
+              <Avatar src="/aptos.svg"></Avatar>
+              <p className="text-xl text-white">8.413</p>
+            </Space>
+          </div>
+        </Space>
+      )}
     </Flex>
   )
 }
