@@ -44,9 +44,17 @@ export type ActionCounterProps = {
   value: string
 }
 
+type CoinsData = {
+  name: string
+  symbol: string
+  iconUri: string
+  amount: number
+  decimals: number
+}
 const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
   const { collectionTypeId } = useLoaderData() as { collectionTypeId: string }
   const { signAndSubmitTransaction, account } = useWallet()
+  const [coinsData, setCoinsData] = useState<CoinsData[]>([])
 
   const [nextValue, setNextValue] = useState("...")
 
@@ -93,6 +101,30 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
     : countLeftToMint === 0
     ? 1
     : countLeftToMint.toString()
+
+  async function getTokenBalance() {
+    if (!account) return
+
+    const coinsData = await aptos.account.getAccountCoinsData({
+      accountAddress: account?.address,
+    })
+
+    setCoinsData(
+      coinsData.map(data => ({
+        name: data.metadata?.name || "",
+        symbol: data.metadata?.symbol || "",
+        iconUri: data.metadata?.icon_uri || "/aptos.svg",
+        amount: data.amount,
+        decimals: data.metadata?.decimals || 0,
+      })).filter(({ symbol }) => symbol.includes("APT") || symbol.includes("CNT"))
+        .filter(({ amount }) => amount > 0)
+        .slice(0, 2),
+    )
+  }
+
+  useEffect(() => {
+    getTokenBalance().then(console.log)
+  }, [account])
 
   return (
     <Flex
@@ -143,18 +175,16 @@ const ActionCounter: FC<ActionCounterProps> = ({ value }) => {
       </Text>
       {account && (
         <Space size="middle" className="mt-2">
-          <div className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
-            <Space size="middle">
-              <Avatar className="text-slate-800" src="/count.svg"></Avatar>
-              <p className="text-xl text-white">8</p>
-            </Space>
-          </div>
-          <div className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
-            <Space size="middle">
-              <Avatar src="/aptos.svg"></Avatar>
-              <p className="text-xl text-white">8.413</p>
-            </Space>
-          </div>
+          {coinsData.map((data, i) => (
+            <div key={i} className="bg-slate-700 text-[#1e293b] flex flex-row p-3 rounded-lg items-center">
+              <Space size="middle">
+                <Avatar className="text-slate-800" src={data.iconUri}></Avatar>
+                <p className="text-xl text-white">
+                  {(data.amount / Math.pow(10, data.decimals)).toFixed(data.decimals > 0 ? 2 : 0)}
+                </p>
+              </Space>
+            </div>
+          ))}
         </Space>
       )}
     </Flex>
